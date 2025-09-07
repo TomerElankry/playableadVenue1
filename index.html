@@ -180,38 +180,6 @@
         background: #545b62;
     }
     
-    .intro-screen {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: transparent;
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        color: #4b3f3f;
-        text-align: left;
-        z-index: 500;
-    }
-    .intro-wrap { position: relative; width: auto; max-width: 640px; margin-top: 6%; }
-    .intro-bubble { position: relative; background: #faefe8; border-radius: 28px; padding: 28px 28px 24px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
-    .intro-name { position: absolute; top: -18px; left: 28px; background: #ff9b98; color:#fff; font-weight:800; padding:8px 14px; border-radius:16px; font-size:18px; letter-spacing:0.2px; box-shadow:0 8px 20px rgba(0,0,0,0.15); }
-    .intro-message { font-size: 36px; line-height: 1.12; font-weight: 800; margin: 8px 0 18px 0; }
-    .intro-cta { display:inline-block; background:#7a5cff; color:#fff; font-weight:800; border:none; border-radius:24px; padding:12px 20px; font-size:18px; cursor:pointer; box-shadow:0 8px 18px rgba(122,92,255,0.35); }
-    
-    .intro-title {
-        font-size: 36px;
-        font-weight: bold;
-        margin-bottom: 20px;
-    }
-    
-    .intro-subtitle {
-        font-size: 18px;
-        margin-bottom: 40px;
-        max-width: 80%;
-    }
-    
     .final-screen {
         position: absolute;
         top: 0;
@@ -251,6 +219,59 @@
     
     .hidden {
         display: none !important;
+    }
+
+    /* Tutorial UI */
+    #tutorialBubble {
+        position: absolute;
+        background: #fff9f4;
+        color: #3f3434;
+        border-radius: 18px;
+        padding: 16px 20px;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+        white-space: nowrap; /* Keep text on one line */
+        pointer-events: auto; /* Changed from none to auto to allow clicking */
+        opacity: 0; 
+        transition: opacity 0.3s ease-out;
+        z-index: 600; 
+    }
+    #tutorialHand {
+        position: absolute;
+        width: 48px;
+        height: 48px;
+        background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e7e7e7 60%, #d0d0d0 100%);
+        border-radius: 50%;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        transform: translate(-50%, -50%);
+        animation: handPulse 1.2s infinite;
+        pointer-events: none;
+        opacity: 0; /* Restore original state */
+        transition: opacity 0.3s ease-out;
+        z-index: 600; /* Revert to original z-index */
+    }
+    @keyframes handPulse { 0%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.06);}100%{transform:translate(-50%,-50%) scale(1);} }
+
+    .tutorial-message {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .btn-tutorial-start {
+        background: #7a5cff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 20px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transition: background 0.2s ease;
+    }
+
+    .btn-tutorial-start:hover {
+        background: #6a4bff;
     }
     </style>
 	
@@ -367,29 +388,33 @@
                 }
             },
             "zones": ["windows", "chandelier", "bed_frame", "bed_sheets", "floor"],
-            "variant": "default"
+            "variant": "default",
+            "tutorial": {
+                "text": "Help us decorate the dream cabin!",
+                "anchor": "windows",
+                "offset": { "x": 0, "y": -180 },
+                "handOffset": { "x": 0, "y": -60 },
+                "delay_ms": 300,
+                "show": true
+            }
         }
     };
     </script>
 </head>
 <body>
     <div id="gameContainer">
-        <!-- Intro Screen (in-scene bubble) -->
-        <div id="introScreen" class="intro-screen">
-            <div class="intro-wrap">
-                <div class="intro-bubble">
-                    <div class="intro-name">Welcome</div>
-                    <div class="intro-message">Help us decorate the cabin!</div>
-                    <button class="intro-cta" onclick="startDesign()">Start</button>
-                </div>
-            </div>
-        </div>
-        
         <!-- Object Layers -->
         <div id="objectLayers"></div>
         
         <!-- Game Hotspots -->
         <div id="hotspots"></div>
+
+        <!-- Tutorial Bubble & Hand -->
+        <div id="tutorialBubble">
+            <div class="tutorial-message">Help us decorate the dream cabin!</div>
+            <button class="btn-tutorial-start" onclick="startDesign()">Start</button>
+        </div>
+        <div id="tutorialHand"></div>
         
         <!-- Catalog Modal -->
         <div id="catalog" class="catalog">
@@ -416,18 +441,6 @@
             </div>
             <button class="btn btn-primary" onclick="downloadGame()">Download Game</button>
         </div>
-
-        <!-- Tutorial Overlay -->
-        <div id="tutorial" class="tutorial-overlay hidden">
-            <div id="tutorialCoach" class="tutorial-coach"> 
-                <div id="tutorialText">Tap the windows to begin</div>
-                <div class="tutorial-actions">
-                    <button id="tutorialSkip" class="btn-mini btn-skip">Skip</button>
-                    <button id="tutorialNext" class="btn-mini btn-next">Next</button>
-                </div>
-            </div>
-            <div id="tutorialHand" class="tutorial-hand"></div>
-        </div>
     </div>
 
     <script>
@@ -440,13 +453,10 @@
         function startDesign() {
             document.getElementById('introScreen').classList.add('hidden');
             initializeHotspots();
-            startTutorial();
-            
-            // Analytics
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'playable_start');
-                gtag('event', 'intro_design_click');
-            }
+            // Enable hotspots
+            document.querySelectorAll('.hotspot').forEach(h => h.style.pointerEvents = 'auto');
+            dismissTutorial();
+            // Analytics - no intro_design_click as there is no separate intro screen
         }
         
         function initializeHotspots() {
@@ -458,13 +468,8 @@
             hotspotsContainer.innerHTML = '';
             objectLayersContainer.innerHTML = '';
             
-            console.log('Initializing zones:', zones);
-            console.log('Total zones to create:', zones.length);
-            console.log('Zone configs available:', Object.keys(CONFIG.application.zonesConfig));
-            
             zones.forEach((zoneId, index) => {
                 const zoneConfig = CONFIG.application.zonesConfig[zoneId];
-                console.log(`Creating hotspot ${index + 1}/5 for ${zoneId}:`, zoneConfig?.dot);
                 
                 // Create hotspot
                 const hotspot = document.createElement('div');
@@ -489,7 +494,6 @@
             // Set cabin background
             document.getElementById('gameContainer').style.backgroundImage = 'url(assets/bg/cabin_base.jpg)';
             
-            console.log('Hotspots initialized. Total hotspots:', document.querySelectorAll('.hotspot').length);
         }
         
         function openCatalog(zoneId) {
@@ -522,9 +526,7 @@
             catalog.style.display = 'flex';
             
             // Analytics
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'spot_opened', { zone: zoneId });
-            }
+            trackEvent('spot_opened', { zone: zoneId });
         }
         
         function selectVariant(variantIndex) {
@@ -536,12 +538,10 @@
             });
             
             // Analytics
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'variant_preview', { 
-                    zone: gameState.currentZone, 
-                    variant: variantIndex 
-                });
-            }
+            trackEvent('variant_preview', { 
+                zone: gameState.currentZone, 
+                variant: variantIndex 
+            });
         }
         
         function approveSelection() {
@@ -565,30 +565,22 @@
             const totalZones = CONFIG.application.zones.length;
             const confirmedCount = Object.keys(gameState.confirmedZones).length;
             
-            console.log(`${confirmedCount}/${totalZones} zones confirmed`);
-            
             if (confirmedCount === totalZones) {
                 setTimeout(showFinalScreen, 1000);
             }
             
             // Analytics
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'spot_confirmed', { zone: zoneId, variant: variantIndex });
-                if (confirmedCount === totalZones) {
-                    gtag('event', 'all_spots_confirmed');
-                }
+            trackEvent('spot_confirmed', { zone: zoneId, variant: variantIndex });
+            if (confirmedCount === totalZones) {
+                trackEvent('all_spots_confirmed');
             }
-            onZoneConfirmed(zoneId);
         }
         
         function replaceObject(zoneId, variantNumber) {
-            console.log(`🔧 Replacing ${zoneId} with variant ${variantNumber}`);
             
             const objectLayer = document.getElementById(`layer-${zoneId}`);
             if (objectLayer) {
                 const imagePath = `assets/items/${zoneId}/view/${variantNumber}.png?v=${Date.now()}`;
-                console.log(`📁 Loading image: ${imagePath}`);
-                console.log(`🎯 Object layer found:`, objectLayer);
                 
                 // Clear any existing styles that might interfere
                 objectLayer.style.backgroundImage = '';
@@ -598,29 +590,20 @@
                 objectLayer.style.display = 'block';
                 objectLayer.style.opacity = '1';
                 
-                console.log(`🎨 Applied styles:`, {
-                    display: objectLayer.style.display,
-                    opacity: objectLayer.style.opacity,
-                    backgroundImage: objectLayer.style.backgroundImage
-                });
                 
                 // Test if image loads
                 const testImg = new Image();
                 testImg.onload = () => {
-                    console.log(`✅ Successfully loaded: ${imagePath}`);
-                    console.log(`📐 Image dimensions: ${testImg.width}x${testImg.height}`);
+                    
                 };
                 testImg.onerror = () => {
                     console.error(`❌ Failed to load PNG: ${imagePath}`);
                     const fallbackPath = imagePath.replace('.png?v=', '.jpg?v=');
-                    console.log(`🔍 Trying JPG fallback: ${fallbackPath}`);
                     objectLayer.style.backgroundImage = `url(${fallbackPath})`;
-                    console.log(`⚠️  Using JPG (with white background) - PNG issue needs investigation`);
                 };
                 testImg.src = imagePath;
             } else {
                 console.error(`❌ Object layer not found for ${zoneId}`);
-                console.log(`🔍 Available layers:`, Array.from(document.querySelectorAll('.object-layer')).map(el => el.id));
             }
         }
         
@@ -643,56 +626,15 @@
             });
             
             // Analytics
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'rating_shown');
-            }
+            trackEvent('rating_shown');
         }
 
-        // Tutorial system
-        const tutorialSteps = [
-            { zone: 'windows', text: 'Tap the windows to begin' },
-            { zone: 'chandelier', text: 'Great! Now choose a chandelier' },
-            { zone: 'bed_frame', text: 'Pick a bed style' },
-            { zone: 'bed_sheets', text: 'Select bed sheets' },
-            { zone: 'floor', text: 'Finish with a floor style' }
-        ];
-        let tutorialIndex = 0;
-        let tutorialActive = false;
-        function startTutorial(){ tutorialIndex = 0; tutorialActive = true; document.getElementById('tutorial').classList.remove('hidden'); updateTutorialUI(); bindTutorialControls(); }
-        function bindTutorialControls(){
-            document.getElementById('tutorialSkip').onclick = endTutorial;
-            document.getElementById('tutorialNext').onclick = () => { tutorialIndex = Math.min(tutorialIndex + 1, tutorialSteps.length - 1); updateTutorialUI(); };
-        }
-        function endTutorial(){ tutorialActive = false; document.getElementById('tutorial').classList.add('hidden'); }
-        function updateTutorialUI(){
-            const step = tutorialSteps[tutorialIndex];
-            const coach = document.getElementById('tutorialCoach');
-            const hand = document.getElementById('tutorialHand');
-            const text = document.getElementById('tutorialText');
-            text.textContent = step.text;
-            const hotspot = document.getElementById(`hotspot-${step.zone}`);
-            if (!hotspot) return;
-            const rect = hotspot.getBoundingClientRect();
-            const containerRect = document.getElementById('gameContainer').getBoundingClientRect();
-            const hx = rect.left + rect.width/2 - containerRect.left;
-            const hy = rect.top + rect.height/2 - containerRect.top;
-            coach.style.left = Math.max(16, Math.min(hx + 60, containerRect.width - 340)) + 'px';
-            coach.style.top = Math.max(16, hy - 40) + 'px';
-            hand.style.left = hx + 'px';
-            hand.style.top = hy + 'px';
-        }
-        function onZoneConfirmed(zoneId){
-            if (!tutorialActive) return;
-            const current = tutorialSteps[tutorialIndex]?.zone;
-            if (zoneId === current && tutorialIndex < tutorialSteps.length - 1) { tutorialIndex++; updateTutorialUI(); }
-            else if (zoneId === current && tutorialIndex === tutorialSteps.length - 1) { endTutorial(); }
-        }
+        // Tutorial system - REMOVED OLD TUTORIAL LOGIC
+        // All old tutorial-related functions and data structures are removed.
         
         function downloadGame() {
             // Analytics
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'cta_click');
-            }
+            trackEvent('cta_click');
             
             // Determine platform and redirect
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -705,12 +647,119 @@
             // Use same-tab navigation to avoid popup blockers
             window.location.href = targetUrl;
         }
+
+        function trackEvent(eventName, eventParams = {}) {
+            if (typeof gtag !== 'undefined') {
+                gtag('event', eventName, eventParams);
+            }
+        }
         
         // Initialize game when page loads
         window.addEventListener('load', function() {
-            resizeGame();
-            // Game is ready, intro screen is showing
+            initializeHotspots();
+            resizeGame(); // Initial scaling
+            
+            // Make hotspots inactive until tutorial starts (or if tutorial is off, enable them)
+            const hotspots = document.querySelectorAll('.hotspot');
+            if (CONFIG.application.tutorial.show) {
+                hotspots.forEach(h => h.style.pointerEvents = 'none');
+                setTimeout(() => {
+                    const bubble = document.getElementById('tutorialBubble');
+                    const hand = document.getElementById('tutorialHand');
+                    if (bubble) bubble.style.opacity = '1';
+                    if (hand) hand.style.opacity = '1';
+                    positionTutorialElements();
+                    trackEvent('tutorial_shown');
+                }, CONFIG.application.tutorial.delay_ms);
+
+                window.addEventListener('resize', () => { resizeGame(); positionTutorialElements(); });
+                window.addEventListener('orientationchange', () => { resizeGame(); positionTutorialElements(); });
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', () => { resizeGame(); positionTutorialElements(); });
+                }
+            } else { // No tutorial, enable hotspots immediately
+                hotspots.forEach(h => h.style.pointerEvents = 'auto');
+                window.addEventListener('resize', resizeGame);
+                window.addEventListener('orientationchange', resizeGame);
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', resizeGame);
+                }
+            }
+            trackEvent('playable_start');
         });
+
+        let tutorialDismissed = false;
+
+        function startDesign() {
+            // This function is now called only by the tutorial's 'Start' button
+            document.querySelectorAll('.hotspot').forEach(h => h.style.pointerEvents = 'auto');
+            dismissTutorial();
+            trackEvent('intro_design_click'); // Analogous to old start button click
+        }
+
+        function dismissTutorial() {
+            if (tutorialDismissed) {
+                return;
+            }
+            tutorialDismissed = true;
+            const bubble = document.getElementById('tutorialBubble');
+            const hand = document.getElementById('tutorialHand');
+            if (bubble) bubble.style.opacity = '0';
+            if (hand) hand.style.opacity = '0';
+            // Remove from DOM after transition
+            setTimeout(() => {
+                if (bubble) bubble.remove();
+                if (hand) hand.remove();
+            }, 300); // Match CSS transition duration
+            trackEvent('tutorial_dismissed');
+        }
+
+        function positionTutorialElements() {
+            const tutorialConfig = CONFIG.application.tutorial;
+            const hotspot = document.getElementById(`hotspot-${tutorialConfig.anchor}`);
+            if (!hotspot) {
+                console.error(`Hotspot '${tutorialConfig.anchor}' not found for tutorial positioning.`);
+                return;
+            }
+
+            const gameContainer = document.getElementById('gameContainer');
+            const gameRect = gameContainer.getBoundingClientRect();
+            const hotspotRect = hotspot.getBoundingClientRect();
+
+            // Calculate hotspot center relative to gameContainer's logical (720x1280) coordinates
+            const scale = gameRect.width / 720; // Assuming width is primary scaling axis
+            const hotspotCenterX_logical = (hotspotRect.left + hotspotRect.width / 2 - gameRect.left) / scale;
+            const hotspotCenterY_logical = (hotspotRect.top + hotspotRect.height / 2 - gameRect.top) / scale;
+
+            // For the bubble, position it in the top-right corner of the gameContainer
+            const bubblePadding = 20; // in logical pixels
+            const bubble = document.getElementById('tutorialBubble'); // Re-get to ensure it's available
+            if (!bubble) {
+                console.error('tutorialBubble element not found for positioning.');
+                return;
+            }
+            const bubbleWidth_logical = bubble.offsetWidth / scale; // Get bubble's actual width
+            const bubbleHeight_logical = bubble.offsetHeight / scale; // Get bubble's actual height
+
+            const bubbleX_logical = (720 - bubbleWidth_logical - bubblePadding);
+            const bubbleY_logical = bubblePadding * 2; // Original padding
+
+            // Apply hand offset (logical coords)
+            const handX_logical = hotspotCenterX_logical + CONFIG.application.tutorial.handOffset.x;
+            const handY_logical = hotspotCenterY_logical + CONFIG.application.tutorial.handOffset.y;
+
+            // Convert back to scaled pixel positions for CSS
+            const hand = document.getElementById('tutorialHand'); // Re-get to ensure it's available
+
+            if (bubble) {
+                bubble.style.left = `${bubbleX_logical * scale + gameRect.left}px`;
+                bubble.style.top = `${bubbleY_logical * scale + gameRect.top}px`;
+            }
+            if (hand) {
+                hand.style.left = `${handX_logical * scale + gameRect.left}px`;
+                hand.style.top = `${handY_logical * scale + gameRect.top}px`;
+            }
+        }
     </script>
 </body>
 </html>
