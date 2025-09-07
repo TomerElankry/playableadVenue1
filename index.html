@@ -27,7 +27,7 @@
         left: 50%;
         transform: translate(-50%, -50%) scale(1);
         transform-origin: center center;
-        background-size: contain;
+        background-size: 100% 100%; /* Changed from contain to 100% 100% to fill the scaled container */
         background-position: center;
         background-repeat: no-repeat;
     }
@@ -38,7 +38,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-size: contain;
+        background-size: 100% 100%; /* Changed from contain to 100% 100% to fill the scaled container */
         background-position: center;
         background-repeat: no-repeat;
         pointer-events: none;
@@ -269,10 +269,10 @@
         var viewportWidth = window.innerWidth;
         var viewportHeight = window.innerHeight;
         var maxScale = Math.min(viewportWidth / baseWidth, viewportHeight / baseHeight);
-        var scale = 0.98 * maxScale;
+        window.currentScale = maxScale; // Make scale global
         var game = document.getElementById('gameContainer');
         if (game) {
-            game.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+            game.style.transform = 'translate(-50%, -50%) scale(' + window.currentScale + ')';
         }
     }
     window.addEventListener('resize', resizeGame);
@@ -459,8 +459,6 @@
                 const hotspot = document.createElement('div');
                 hotspot.className = 'hotspot';
                 hotspot.id = `hotspot-${zoneId}`;
-                hotspot.style.left = `calc(50% + ${zoneConfig.dot.x}px)`;
-                hotspot.style.top = `calc(50% + ${zoneConfig.dot.y}px)`;
                 hotspot.onclick = () => openCatalog(zoneId);
                 hotspot.setAttribute('data-zone', zoneId);
                 
@@ -651,23 +649,25 @@
                     const bubble = document.getElementById('tutorialBubble');
                     if (bubble) bubble.style.opacity = '1';
                     positionTutorialElements(); // Still needed for bubble positioning
+                    repositionHotspots(); // Reposition hotspots after initial scaling and after tutorial appears
                     trackEvent('tutorial_shown');
                 }, CONFIG.application.tutorial.delay_ms);
 
-                window.addEventListener('resize', () => { resizeGame(); positionTutorialElements(); });
-                window.addEventListener('orientationchange', () => { resizeGame(); positionTutorialElements(); });
+                window.addEventListener('resize', () => { resizeGame(); positionTutorialElements(); repositionHotspots(); });
+                window.addEventListener('orientationchange', () => { resizeGame(); positionTutorialElements(); repositionHotspots(); });
                 if (window.visualViewport) {
-                    window.visualViewport.addEventListener('resize', () => { resizeGame(); positionTutorialElements(); });
+                    window.visualViewport.addEventListener('resize', () => { resizeGame(); positionTutorialElements(); repositionHotspots(); });
                 }
             } else { // No tutorial, enable hotspots immediately
                 hotspots.forEach(h => h.style.pointerEvents = 'auto');
-                window.addEventListener('resize', resizeGame);
-                window.addEventListener('orientationchange', resizeGame);
+                window.addEventListener('resize', () => { resizeGame(); repositionHotspots(); });
+                window.addEventListener('orientationchange', () => { resizeGame(); repositionHotspots(); });
                 if (window.visualViewport) {
-                    window.visualViewport.addEventListener('resize', resizeGame);
+                    window.visualViewport.addEventListener('resize', () => { resizeGame(); repositionHotspots(); });
                 }
             }
             trackEvent('playable_start');
+            repositionHotspots(); // Initial repositioning of hotspots
         });
 
         let tutorialDismissed = false;
@@ -717,6 +717,37 @@
                 bubble.style.left = `${bubbleX_logical * scale + gameRect.left}px`;
                 bubble.style.top = `${bubbleY_logical * scale + gameRect.top}px`;
             }
+        }
+
+        function repositionHotspots() {
+            const gameContainer = document.getElementById('gameContainer');
+            if (!gameContainer) {
+                console.error('gameContainer not found for hotspot repositioning.');
+                return;
+            }
+            const gameRect = gameContainer.getBoundingClientRect();
+            const currentScale = window.currentScale || 1; // Use global scale, default to 1
+
+            document.querySelectorAll('.hotspot').forEach(hotspot => {
+                const zoneId = hotspot.getAttribute('data-zone');
+                const zoneConfig = CONFIG.application.zonesConfig[zoneId];
+                if (!zoneConfig || !zoneConfig.dot) {
+                    console.warn(`No dot configuration found for hotspot zone: ${zoneId}`);
+                    return;
+                }
+
+                // Calculate logical center of the game (720x1280)
+                const gameCenterX_logical = 720 / 2;
+                const gameCenterY_logical = 1280 / 2;
+
+                // Calculate hotspot's logical position relative to game's logical center
+                const hotspotX_logical = gameCenterX_logical + zoneConfig.dot.x;
+                const hotspotY_logical = gameCenterY_logical + zoneConfig.dot.y;
+
+                // Convert to scaled pixel positions for CSS
+                hotspot.style.left = `${hotspotX_logical * currentScale + gameRect.left}px`;
+                hotspot.style.top = `${hotspotY_logical * currentScale + gameRect.top}px`;
+            });
         }
     </script>
 </body>
