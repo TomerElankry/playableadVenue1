@@ -235,21 +235,7 @@
         transition: opacity 0.3s ease-out;
         z-index: 600; 
     }
-    #tutorialHand {
-        position: absolute;
-        width: 48px;
-        height: 48px;
-        background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e7e7e7 60%, #d0d0d0 100%);
-        border-radius: 50%;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-        transform: translate(-50%, -50%);
-        animation: handPulse 1.2s infinite;
-        pointer-events: none;
-        opacity: 0; /* Restore original state */
-        transition: opacity 0.3s ease-out;
-        z-index: 600; /* Revert to original z-index */
-    }
-    @keyframes handPulse { 0%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.06);}100%{transform:translate(-50%,-50%) scale(1);} }
+    /* Removed #tutorialHand CSS and @keyframes handPulse */
 
     .tutorial-message {
         font-size: 24px;
@@ -393,7 +379,6 @@
                 "text": "Help us decorate the dream cabin!",
                 "anchor": "windows",
                 "offset": { "x": 0, "y": -180 },
-                "handOffset": { "x": 0, "y": -60 },
                 "delay_ms": 300,
                 "show": true
             }
@@ -414,7 +399,6 @@
             <div class="tutorial-message">Help us decorate the dream cabin!</div>
             <button class="btn-tutorial-start" onclick="startDesign()">Start</button>
         </div>
-        <div id="tutorialHand"></div>
         
         <!-- Catalog Modal -->
         <div id="catalog" class="catalog">
@@ -665,10 +649,8 @@
                 hotspots.forEach(h => h.style.pointerEvents = 'none');
                 setTimeout(() => {
                     const bubble = document.getElementById('tutorialBubble');
-                    const hand = document.getElementById('tutorialHand');
                     if (bubble) bubble.style.opacity = '1';
-                    if (hand) hand.style.opacity = '1';
-                    positionTutorialElements();
+                    positionTutorialElements(); // Still needed for bubble positioning
                     trackEvent('tutorial_shown');
                 }, CONFIG.application.tutorial.delay_ms);
 
@@ -703,61 +685,37 @@
             }
             tutorialDismissed = true;
             const bubble = document.getElementById('tutorialBubble');
-            const hand = document.getElementById('tutorialHand');
             if (bubble) bubble.style.opacity = '0';
-            if (hand) hand.style.opacity = '0';
             // Remove from DOM after transition
             setTimeout(() => {
                 if (bubble) bubble.remove();
-                if (hand) hand.remove();
             }, 300); // Match CSS transition duration
             trackEvent('tutorial_dismissed');
         }
 
         function positionTutorialElements() {
             const tutorialConfig = CONFIG.application.tutorial;
-            const hotspot = document.getElementById(`hotspot-${tutorialConfig.anchor}`);
-            if (!hotspot) {
-                console.error(`Hotspot '${tutorialConfig.anchor}' not found for tutorial positioning.`);
-                return;
-            }
 
             const gameContainer = document.getElementById('gameContainer');
             const gameRect = gameContainer.getBoundingClientRect();
-            const hotspotRect = hotspot.getBoundingClientRect();
 
-            // Calculate hotspot center relative to gameContainer's logical (720x1280) coordinates
             const scale = gameRect.width / 720; // Assuming width is primary scaling axis
-            const hotspotCenterX_logical = (hotspotRect.left + hotspotRect.width / 2 - gameRect.left) / scale;
-            const hotspotCenterY_logical = (hotspotRect.top + hotspotRect.height / 2 - gameRect.top) / scale;
 
-            // For the bubble, position it in the top-right corner of the gameContainer
             const bubblePadding = 20; // in logical pixels
-            const bubble = document.getElementById('tutorialBubble'); // Re-get to ensure it's available
+            const bubble = document.getElementById('tutorialBubble');
             if (!bubble) {
                 console.error('tutorialBubble element not found for positioning.');
                 return;
             }
-            const bubbleWidth_logical = bubble.offsetWidth / scale; // Get bubble's actual width
-            const bubbleHeight_logical = bubble.offsetHeight / scale; // Get bubble's actual height
+            const bubbleWidth_logical = bubble.offsetWidth / scale;
+            const bubbleHeight_logical = bubble.offsetHeight / scale;
 
             const bubbleX_logical = (720 - bubbleWidth_logical - bubblePadding);
-            const bubbleY_logical = bubblePadding * 2; // Original padding
-
-            // Apply hand offset (logical coords)
-            const handX_logical = hotspotCenterX_logical + CONFIG.application.tutorial.handOffset.x;
-            const handY_logical = hotspotCenterY_logical + CONFIG.application.tutorial.handOffset.y;
-
-            // Convert back to scaled pixel positions for CSS
-            const hand = document.getElementById('tutorialHand'); // Re-get to ensure it's available
+            const bubbleY_logical = (1280 / 2) - (bubbleHeight_logical / 2); // Position half a page down, vertically centered
 
             if (bubble) {
                 bubble.style.left = `${bubbleX_logical * scale + gameRect.left}px`;
                 bubble.style.top = `${bubbleY_logical * scale + gameRect.top}px`;
-            }
-            if (hand) {
-                hand.style.left = `${handX_logical * scale + gameRect.left}px`;
-                hand.style.top = `${handY_logical * scale + gameRect.top}px`;
             }
         }
     </script>
