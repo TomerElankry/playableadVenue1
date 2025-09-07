@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Cabin Design - Playable Ad</title>
+    
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+    
+    <style type="text/css">
+    html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000000;
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        font-family: Arial, sans-serif;
+    }
+    
+    #gameContainer {
+        width: 720px;
+        height: 1280px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1);
+        transform-origin: center center;
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    
+    .object-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+    
+    #layer-bed_frame {
+        background-size: contain !important;
+        background-position: center center !important;
+        top: 0 !important;
+    }
+    
+    /* JS will scale #gameContainer to fit window (~98%) while preserving aspect */
+    
+    .hotspot {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.4);
+        border: 2px solid #fff;
+        border-radius: 50%;
+        cursor: pointer;
+        animation: pulse 2s infinite;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    
+    .hotspot.confirmed {
+        background: rgba(0, 255, 0, 0.3);
+        border-color: #00ff00;
+        animation: none;
+    }
+    
+    .hotspot.confirmed::after {
+        content: "✓";
+        color: #00ff00;
+        font-weight: bold;
+        font-size: 20px;
+    }
+    
+    @keyframes pulse {
+        0% { transform: translate(-50%, -50%) scale(1); }
+        50% { transform: translate(-50%, -50%) scale(1.1); }
+        100% { transform: translate(-50%, -50%) scale(1); }
+    }
+    
+    .catalog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .catalog-content {
+        background: #fff;
+        border-radius: 20px;
+        padding: 20px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: hidden;
+    }
+    
+    .catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .catalog-item {
+        width: 120px;
+        height: 120px;
+        border: 3px solid transparent;
+        border-radius: 10px;
+        cursor: pointer;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .catalog-item:hover {
+        border-color: #007bff;
+        transform: scale(1.05);
+    }
+    
+    .catalog-item.selected {
+        border-color: #007bff;
+        background: #e7f3ff;
+    }
+    
+    .catalog-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .catalog-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #0056b3;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #545b62;
+    }
+    
+    .intro-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        color: #4b3f3f;
+        text-align: left;
+        z-index: 500;
+    }
+    .intro-wrap { position: relative; width: auto; max-width: 640px; margin-top: 6%; }
+    .intro-bubble { position: relative; background: #faefe8; border-radius: 28px; padding: 28px 28px 24px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    .intro-name { position: absolute; top: -18px; left: 28px; background: #ff9b98; color:#fff; font-weight:800; padding:8px 14px; border-radius:16px; font-size:18px; letter-spacing:0.2px; box-shadow:0 8px 20px rgba(0,0,0,0.15); }
+    .intro-message { font-size: 36px; line-height: 1.12; font-weight: 800; margin: 8px 0 18px 0; }
+    .intro-cta { display:inline-block; background:#7a5cff; color:#fff; font-weight:800; border:none; border-radius:24px; padding:12px 20px; font-size:18px; cursor:pointer; box-shadow:0 8px 18px rgba(122,92,255,0.35); }
+    
+    .intro-title {
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    
+    .intro-subtitle {
+        font-size: 18px;
+        margin-bottom: 40px;
+        max-width: 80%;
+    }
+    
+    .final-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: center;
+        z-index: 500;
+    }
+    
+    .stars {
+        display: flex;
+        gap: 10px;
+        margin: 30px 0;
+    }
+    
+    .star {
+        font-size: 48px;
+        color: #ffd700;
+        animation: starPop 0.5s ease forwards;
+        opacity: 0;
+        transform: scale(0);
+    }
+    
+    @keyframes starPop {
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+    </style>
+	
+    <script>
+    // Fit 720x1280 to window (~98%) while preserving aspect
+    function resizeGame() {
+        var baseWidth = 720;
+        var baseHeight = 1280;
+        var viewportWidth = window.innerWidth;
+        var viewportHeight = window.innerHeight;
+        var maxScale = Math.min(viewportWidth / baseWidth, viewportHeight / baseHeight);
+        var scale = 0.98 * maxScale;
+        var game = document.getElementById('gameContainer');
+        if (game) {
+            game.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+        }
+    }
+    window.addEventListener('resize', resizeGame);
+    window.addEventListener('orientationchange', resizeGame);
+    var CONFIG = {
+        "googlePlayUrl": "https://www.venuegame.co",
+        "appStoreUrl": "https://www.venuegame.co",
+        "I18": {
+            "locale": "auto",
+            "strings": {
+                "Design": {"en": "Design"},
+                "Download": {"en": "Download"},
+                "Close": {"en": "Close"},
+                "Approve": {"en": "Approve"},
+                "Design your perfect cabin": {"en": "Design your perfect cabin"},
+                "Choose from our collection": {"en": "Choose from our collection"},
+                "Congratulations!": {"en": "Congratulations!"},
+                "Your cabin is complete!": {"en": "Your cabin is complete!"}
+            }
+        },
+        "application": {
+            "showDebugInfo": false,
+            "hintDelay": 3000,
+            "zonesConfig": {
+                "windows": {
+                    "view": "items/windows/view/default",
+                    "dot": {"x": -216, "y": -243},
+                    "variants": [
+                        {"item": "items/windows/item/1", "view": "items/windows/view/1", "name": "Modern Frame"},
+                        {"item": "items/windows/item/2", "view": "items/windows/view/2", "name": "Classic Wood"},
+                        {"item": "items/windows/item/3", "view": "items/windows/view/3", "name": "Rustic Style"},
+                        {"item": "items/windows/item/4", "view": "items/windows/view/4", "name": "Minimalist"},
+                        {"item": "items/windows/item/5", "view": "items/windows/view/5", "name": "Traditional"},
+                        {"item": "items/windows/item/6", "view": "items/windows/view/6", "name": "Contemporary"},
+                        {"item": "items/windows/item/7", "view": "items/windows/view/7", "name": "Vintage"},
+                        {"item": "items/windows/item/8", "view": "items/windows/view/8", "name": "Industrial"},
+                        {"item": "items/windows/item/9", "view": "items/windows/view/9", "name": "Cottage Style"}
+                    ]
+                },
+                "chandelier": {
+                    "view": "items/chandelier/view/default",
+                    "dot": {"x": -4, "y": -129},
+                    "variants": [
+                        {"item": "items/chandelier/item/1", "view": "items/chandelier/view/1", "name": "Crystal Elegance"},
+                        {"item": "items/chandelier/item/2", "view": "items/chandelier/view/2", "name": "Modern Pendant"},
+                        {"item": "items/chandelier/item/3", "view": "items/chandelier/view/3", "name": "Rustic Iron"},
+                        {"item": "items/chandelier/item/4", "view": "items/chandelier/view/4", "name": "Globe Light"},
+                        {"item": "items/chandelier/item/5", "view": "items/chandelier/view/5", "name": "Branch Design"},
+                        {"item": "items/chandelier/item/6", "view": "items/chandelier/view/6", "name": "Minimalist Ring"},
+                        {"item": "items/chandelier/item/7", "view": "items/chandelier/view/7", "name": "Vintage Brass"},
+                        {"item": "items/chandelier/item/8", "view": "items/chandelier/view/8", "name": "Industrial Cage"},
+                        {"item": "items/chandelier/item/9", "view": "items/chandelier/view/9", "name": "Nature Inspired"}
+                    ]
+                },
+                "bed_frame": {
+                    "view": "items/bed_frame/view/default",
+                    "dot": {"x": 162, "y": 280},
+                    "variants": [
+                        {"item": "items/bed_frame/item/1", "view": "items/bed_frame/view/1", "name": "Oak Platform"},
+                        {"item": "items/bed_frame/item/2", "view": "items/bed_frame/view/2", "name": "Metal Frame"},
+                        {"item": "items/bed_frame/item/3", "view": "items/bed_frame/view/3", "name": "Upholstered"},
+                        {"item": "items/bed_frame/item/4", "view": "items/bed_frame/view/4", "name": "Minimalist"},
+                        {"item": "items/bed_frame/item/5", "view": "items/bed_frame/view/5", "name": "Rustic Wood"},
+                        {"item": "items/bed_frame/item/6", "view": "items/bed_frame/view/6", "name": "Modern Steel"},
+                        {"item": "items/bed_frame/item/7", "view": "items/bed_frame/view/7", "name": "Vintage Iron"},
+                        {"item": "items/bed_frame/item/8", "view": "items/bed_frame/view/8", "name": "Scandinavian"},
+                        {"item": "items/bed_frame/item/9", "view": "items/bed_frame/view/9", "name": "Industrial"}
+                    ]
+                },
+                "bed_sheets": {
+                    "view": "items/bed_sheets/view/default",
+                    "dot": {"x": -12, "y": 239},
+                    "variants": [
+                        {"item": "items/bed_sheets/item/1", "view": "items/bed_sheets/view/1", "name": "White Linen"},
+                        {"item": "items/bed_sheets/item/2", "view": "items/bed_sheets/view/2", "name": "Navy Cotton"},
+                        {"item": "items/bed_sheets/item/3", "view": "items/bed_sheets/view/3", "name": "Gray Silk"},
+                        {"item": "items/bed_sheets/item/4", "view": "items/bed_sheets/view/4", "name": "Cream Satin"},
+                        {"item": "items/bed_sheets/item/5", "view": "items/bed_sheets/view/5", "name": "Earth Tones"},
+                        {"item": "items/bed_sheets/item/6", "view": "items/bed_sheets/view/6", "name": "Floral Print"},
+                        {"item": "items/bed_sheets/item/7", "view": "items/bed_sheets/view/7", "name": "Striped Blue"},
+                        {"item": "items/bed_sheets/item/8", "view": "items/bed_sheets/view/8", "name": "Bohemian"},
+                        {"item": "items/bed_sheets/item/9", "view": "items/bed_sheets/view/9", "name": "Minimalist"}
+                    ]
+                },
+                "floor": {
+                    "view": "items/floor/view/default",
+                    "dot": {"x": -270, "y": 311},
+                    "variants": [
+                        {"item": "items/floor/item/1", "view": "items/floor/view/1", "name": "Oak Hardwood"},
+                        {"item": "items/floor/item/2", "view": "items/floor/view/2", "name": "Stone Tile"},
+                        {"item": "items/floor/item/3", "view": "items/floor/view/3", "name": "Bamboo"},
+                        {"item": "items/floor/item/4", "view": "items/floor/view/4", "name": "Marble"},
+                        {"item": "items/floor/item/5", "view": "items/floor/view/5", "name": "Pine Wood"},
+                        {"item": "items/floor/item/6", "view": "items/floor/view/6", "name": "Ceramic"},
+                        {"item": "items/floor/item/7", "view": "items/floor/view/7", "name": "Walnut"},
+                        {"item": "items/floor/item/8", "view": "items/floor/view/8", "name": "Concrete"},
+                        {"item": "items/floor/item/9", "view": "items/floor/view/9", "name": "Reclaimed Wood"}
+                    ]
+                }
+            },
+            "zones": ["windows", "chandelier", "bed_frame", "bed_sheets", "floor"],
+            "variant": "default"
+        }
+    };
+    </script>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Intro Screen (in-scene bubble) -->
+        <div id="introScreen" class="intro-screen">
+            <div class="intro-wrap">
+                <div class="intro-bubble">
+                    <div class="intro-name">Welcome</div>
+                    <div class="intro-message">Help us decorate the cabin!</div>
+                    <button class="intro-cta" onclick="startDesign()">Start</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Object Layers -->
+        <div id="objectLayers"></div>
+        
+        <!-- Game Hotspots -->
+        <div id="hotspots"></div>
+        
+        <!-- Catalog Modal -->
+        <div id="catalog" class="catalog">
+            <div class="catalog-content">
+                <h2 id="catalogTitle">Choose Your Style</h2>
+                <div id="catalogGrid" class="catalog-grid"></div>
+                <div class="catalog-buttons">
+                    <button class="btn btn-secondary" onclick="closeCatalog()">Close</button>
+                    <button class="btn btn-primary" onclick="approveSelection()">Approve</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Final Screen -->
+        <div id="finalScreen" class="final-screen">
+            <div class="intro-title">Congratulations!</div>
+            <div class="intro-subtitle">Your cabin design is complete!</div>
+            <div class="stars">
+                <span class="star">⭐</span>
+                <span class="star">⭐</span>
+                <span class="star">⭐</span>
+                <span class="star">⭐</span>
+                <span class="star">⭐</span>
+            </div>
+            <button class="btn btn-primary" onclick="downloadGame()">Download Game</button>
+        </div>
+
+        <!-- Tutorial Overlay -->
+        <div id="tutorial" class="tutorial-overlay hidden">
+            <div id="tutorialCoach" class="tutorial-coach"> 
+                <div id="tutorialText">Tap the windows to begin</div>
+                <div class="tutorial-actions">
+                    <button id="tutorialSkip" class="btn-mini btn-skip">Skip</button>
+                    <button id="tutorialNext" class="btn-mini btn-next">Next</button>
+                </div>
+            </div>
+            <div id="tutorialHand" class="tutorial-hand"></div>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            confirmedZones: {},
+            selectedVariant: null,
+            currentZone: null
+        };
+        
+        function startDesign() {
+            document.getElementById('introScreen').classList.add('hidden');
+            initializeHotspots();
+            startTutorial();
+            
+            // Analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'playable_start');
+                gtag('event', 'intro_design_click');
+            }
+        }
+        
+        function initializeHotspots() {
+            const hotspotsContainer = document.getElementById('hotspots');
+            const objectLayersContainer = document.getElementById('objectLayers');
+            const zones = CONFIG.application.zones;
+            
+            // Clear existing content
+            hotspotsContainer.innerHTML = '';
+            objectLayersContainer.innerHTML = '';
+            
+            console.log('Initializing zones:', zones);
+            console.log('Total zones to create:', zones.length);
+            console.log('Zone configs available:', Object.keys(CONFIG.application.zonesConfig));
+            
+            zones.forEach((zoneId, index) => {
+                const zoneConfig = CONFIG.application.zonesConfig[zoneId];
+                console.log(`Creating hotspot ${index + 1}/5 for ${zoneId}:`, zoneConfig?.dot);
+                
+                // Create hotspot
+                const hotspot = document.createElement('div');
+                hotspot.className = 'hotspot';
+                hotspot.id = `hotspot-${zoneId}`;
+                hotspot.style.left = `calc(50% + ${zoneConfig.dot.x}px)`;
+                hotspot.style.top = `calc(50% + ${zoneConfig.dot.y}px)`;
+                hotspot.onclick = () => openCatalog(zoneId);
+                hotspot.setAttribute('data-zone', zoneId);
+                
+                hotspotsContainer.appendChild(hotspot);
+                
+                // Create object layer for this zone
+                const objectLayer = document.createElement('div');
+                objectLayer.className = 'object-layer';
+                objectLayer.id = `layer-${zoneId}`;
+                objectLayer.style.display = 'none'; // Initially hidden
+                
+                objectLayersContainer.appendChild(objectLayer);
+            });
+            
+            // Set cabin background
+            document.getElementById('gameContainer').style.backgroundImage = 'url(assets/bg/cabin_base.jpg)';
+            
+            console.log('Hotspots initialized. Total hotspots:', document.querySelectorAll('.hotspot').length);
+        }
+        
+        function openCatalog(zoneId) {
+            gameState.currentZone = zoneId;
+            const zoneConfig = CONFIG.application.zonesConfig[zoneId];
+            const catalog = document.getElementById('catalog');
+            const catalogTitle = document.getElementById('catalogTitle');
+            const catalogGrid = document.getElementById('catalogGrid');
+            
+            catalogTitle.textContent = `Choose ${zoneId.replace('_', ' ').toUpperCase()}`;
+            catalogGrid.innerHTML = '';
+            
+            zoneConfig.variants.forEach((variant, index) => {
+                const item = document.createElement('div');
+                item.className = 'catalog-item';
+                item.onclick = () => selectVariant(index);
+                
+                const img = document.createElement('img');
+                img.src = `assets/thumbs/${zoneId}/${index + 1}.png?v=${Date.now()}`;
+                img.alt = variant.name;
+                img.onerror = () => {
+                    // Fallback to placeholder
+                    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI2MCIgeT0iNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+SW1hZ2U8L3RleHQ+PC9zdmc+';
+                };
+                
+                item.appendChild(img);
+                catalogGrid.appendChild(item);
+            });
+            
+            catalog.style.display = 'flex';
+            
+            // Analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'spot_opened', { zone: zoneId });
+            }
+        }
+        
+        function selectVariant(variantIndex) {
+            gameState.selectedVariant = variantIndex;
+            
+            // Update visual selection
+            document.querySelectorAll('.catalog-item').forEach((item, index) => {
+                item.classList.toggle('selected', index === variantIndex);
+            });
+            
+            // Analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'variant_preview', { 
+                    zone: gameState.currentZone, 
+                    variant: variantIndex 
+                });
+            }
+        }
+        
+        function approveSelection() {
+            if (gameState.selectedVariant === null || !gameState.currentZone) return;
+            
+            const zoneId = gameState.currentZone;
+            const variantIndex = gameState.selectedVariant;
+            
+            gameState.confirmedZones[zoneId] = variantIndex;
+            
+            // Update the actual object in the scene
+            replaceObject(zoneId, variantIndex + 1); // +1 because files are numbered from 1
+            
+            // Update hotspot appearance
+            const hotspot = document.getElementById(`hotspot-${zoneId}`);
+            hotspot.classList.add('confirmed');
+            
+            closeCatalog();
+            
+            // Check if all zones are confirmed
+            const totalZones = CONFIG.application.zones.length;
+            const confirmedCount = Object.keys(gameState.confirmedZones).length;
+            
+            console.log(`${confirmedCount}/${totalZones} zones confirmed`);
+            
+            if (confirmedCount === totalZones) {
+                setTimeout(showFinalScreen, 1000);
+            }
+            
+            // Analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'spot_confirmed', { zone: zoneId, variant: variantIndex });
+                if (confirmedCount === totalZones) {
+                    gtag('event', 'all_spots_confirmed');
+                }
+            }
+            onZoneConfirmed(zoneId);
+        }
+        
+        function replaceObject(zoneId, variantNumber) {
+            console.log(`🔧 Replacing ${zoneId} with variant ${variantNumber}`);
+            
+            const objectLayer = document.getElementById(`layer-${zoneId}`);
+            if (objectLayer) {
+                const imagePath = `assets/items/${zoneId}/view/${variantNumber}.png?v=${Date.now()}`;
+                console.log(`📁 Loading image: ${imagePath}`);
+                console.log(`🎯 Object layer found:`, objectLayer);
+                
+                // Clear any existing styles that might interfere
+                objectLayer.style.backgroundImage = '';
+                
+                // Set the new background image
+                objectLayer.style.backgroundImage = `url(${imagePath})`;
+                objectLayer.style.display = 'block';
+                objectLayer.style.opacity = '1';
+                
+                console.log(`🎨 Applied styles:`, {
+                    display: objectLayer.style.display,
+                    opacity: objectLayer.style.opacity,
+                    backgroundImage: objectLayer.style.backgroundImage
+                });
+                
+                // Test if image loads
+                const testImg = new Image();
+                testImg.onload = () => {
+                    console.log(`✅ Successfully loaded: ${imagePath}`);
+                    console.log(`📐 Image dimensions: ${testImg.width}x${testImg.height}`);
+                };
+                testImg.onerror = () => {
+                    console.error(`❌ Failed to load PNG: ${imagePath}`);
+                    const fallbackPath = imagePath.replace('.png?v=', '.jpg?v=');
+                    console.log(`🔍 Trying JPG fallback: ${fallbackPath}`);
+                    objectLayer.style.backgroundImage = `url(${fallbackPath})`;
+                    console.log(`⚠️  Using JPG (with white background) - PNG issue needs investigation`);
+                };
+                testImg.src = imagePath;
+            } else {
+                console.error(`❌ Object layer not found for ${zoneId}`);
+                console.log(`🔍 Available layers:`, Array.from(document.querySelectorAll('.object-layer')).map(el => el.id));
+            }
+        }
+        
+        function closeCatalog() {
+            document.getElementById('catalog').style.display = 'none';
+            gameState.selectedVariant = null;
+            gameState.currentZone = null;
+        }
+        
+        function showFinalScreen() {
+            const finalScreen = document.getElementById('finalScreen');
+            finalScreen.style.display = 'flex';
+            
+            // Animate stars
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                setTimeout(() => {
+                    star.style.animationDelay = `${index * 0.2}s`;
+                }, index * 200);
+            });
+            
+            // Analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'rating_shown');
+            }
+        }
+
+        // Tutorial system
+        const tutorialSteps = [
+            { zone: 'windows', text: 'Tap the windows to begin' },
+            { zone: 'chandelier', text: 'Great! Now choose a chandelier' },
+            { zone: 'bed_frame', text: 'Pick a bed style' },
+            { zone: 'bed_sheets', text: 'Select bed sheets' },
+            { zone: 'floor', text: 'Finish with a floor style' }
+        ];
+        let tutorialIndex = 0;
+        let tutorialActive = false;
+        function startTutorial(){ tutorialIndex = 0; tutorialActive = true; document.getElementById('tutorial').classList.remove('hidden'); updateTutorialUI(); bindTutorialControls(); }
+        function bindTutorialControls(){
+            document.getElementById('tutorialSkip').onclick = endTutorial;
+            document.getElementById('tutorialNext').onclick = () => { tutorialIndex = Math.min(tutorialIndex + 1, tutorialSteps.length - 1); updateTutorialUI(); };
+        }
+        function endTutorial(){ tutorialActive = false; document.getElementById('tutorial').classList.add('hidden'); }
+        function updateTutorialUI(){
+            const step = tutorialSteps[tutorialIndex];
+            const coach = document.getElementById('tutorialCoach');
+            const hand = document.getElementById('tutorialHand');
+            const text = document.getElementById('tutorialText');
+            text.textContent = step.text;
+            const hotspot = document.getElementById(`hotspot-${step.zone}`);
+            if (!hotspot) return;
+            const rect = hotspot.getBoundingClientRect();
+            const containerRect = document.getElementById('gameContainer').getBoundingClientRect();
+            const hx = rect.left + rect.width/2 - containerRect.left;
+            const hy = rect.top + rect.height/2 - containerRect.top;
+            coach.style.left = Math.max(16, Math.min(hx + 60, containerRect.width - 340)) + 'px';
+            coach.style.top = Math.max(16, hy - 40) + 'px';
+            hand.style.left = hx + 'px';
+            hand.style.top = hy + 'px';
+        }
+        function onZoneConfirmed(zoneId){
+            if (!tutorialActive) return;
+            const current = tutorialSteps[tutorialIndex]?.zone;
+            if (zoneId === current && tutorialIndex < tutorialSteps.length - 1) { tutorialIndex++; updateTutorialUI(); }
+            else if (zoneId === current && tutorialIndex === tutorialSteps.length - 1) { endTutorial(); }
+        }
+        
+        function downloadGame() {
+            // Analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'cta_click');
+            }
+            
+            // Determine platform and redirect
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            let targetUrl = CONFIG.googlePlayUrl;
+            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+                targetUrl = CONFIG.appStoreUrl;
+            } else if (/android/i.test(userAgent)) {
+                targetUrl = CONFIG.googlePlayUrl;
+            }
+            // Use same-tab navigation to avoid popup blockers
+            window.location.href = targetUrl;
+        }
+        
+        // Initialize game when page loads
+        window.addEventListener('load', function() {
+            resizeGame();
+            // Game is ready, intro screen is showing
+        });
+    </script>
+</body>
+</html>
