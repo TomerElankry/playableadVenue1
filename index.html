@@ -85,58 +85,76 @@
     }
     
     .catalog {
-        position: fixed;
+        position: absolute; /* Changed from fixed */
         top: 0;
-        left: 0;
-        width: 100%;
+        right: -400px; /* Start off-screen */
+        width: 350px;
         height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        display: none;
+        background: rgba(245, 235, 224, 0.9); /* Cozy cream color, semi-transparent */
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
         z-index: 1000;
+        transition: right 0.5s ease-in-out; /* Slide in/out animation */
+        padding: 20px;
+        box-sizing: border-box;
     }
     
-    .catalog-content {
-        background: #fff;
-        border-radius: 20px;
-        padding: 20px;
-        max-width: 90%;
-        max-height: 90%;
-        overflow: hidden;
+    .catalog.visible {
+        right: 0; /* Slide in */
+    }
+
+    .catalog-title {
+        font-size: 28px;
+        color: #4E443C;
+        font-family: 'Georgia', serif;
+        margin-bottom: 20px;
     }
     
     .catalog-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        display: flex;
+        flex-direction: column;
         gap: 15px;
-        margin: 20px 0;
+        width: 100%;
+        overflow-y: auto; /* Allow scrolling if items overflow */
     }
     
     .catalog-item {
-        width: 120px;
-        height: 120px;
-        border: 3px solid transparent;
-        border-radius: 10px;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.7);
+        border: 2px solid transparent;
+        border-radius: 15px;
         cursor: pointer;
         overflow: hidden;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        box-sizing: border-box;
     }
     
     .catalog-item:hover {
-        border-color: #007bff;
-        transform: scale(1.05);
+        border-color: #B5651D;
+        transform: scale(1.03);
     }
     
     .catalog-item.selected {
-        border-color: #007bff;
-        background: #e7f3ff;
+        border-color: #B5651D;
+        background: rgba(191, 216, 189, 0.8); /* Cozy sage green */
     }
     
     .catalog-item img {
-        width: 100%;
-        height: 100%;
+        width: 100px;
+        height: 80px;
         object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .catalog-item-name {
+        margin-left: 15px;
+        font-size: 20px;
+        color: #4E443C;
+        font-family: 'Georgia', serif;
     }
     
     .catalog-buttons {
@@ -342,7 +360,7 @@
     
     .speech-bubble {
         position: relative;
-        background: rgba(191, 216, 189, 0.9); /* Sage green with 90% opacity */
+        background: #F5EBE0; /* Warmer cream color */
         border-radius: 35px; /* Softer corners */
         padding: 25px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.15);
@@ -542,14 +560,8 @@
         
         <!-- Catalog Modal -->
         <div id="catalog" class="catalog">
-            <div class="catalog-content">
-                <h2 id="catalogTitle">Choose Your Style</h2>
-                <div id="catalogGrid" class="catalog-grid"></div>
-                <div class="catalog-buttons">
-                    <button class="btn btn-secondary" onclick="closeCatalog()">Close</button>
-                    <button class="btn btn-primary" onclick="approveSelection()">Approve</button>
-                </div>
-            </div>
+            <h2 id="catalogTitle" class="catalog-title">Choose Your Style</h2>
+            <div id="catalogGrid" class="catalog-grid"></div>
         </div>
         
         <!-- Debug HUD -->
@@ -663,39 +675,68 @@
             zoneConfig.variants.forEach((variant, index) => {
                 const item = document.createElement('div');
                 item.className = 'catalog-item';
-                item.onclick = () => selectVariant(index);
+                item.onmouseenter = () => previewVariant(index);
+                item.onmouseleave = () => revertPreview();
+                item.onclick = () => confirmVariant(index);
                 
                 const img = document.createElement('img');
                 img.src = `assets/thumbs/${zoneId}/${index + 1}.png?v=${Date.now()}`;
                 img.alt = variant.name;
                 img.onerror = () => {
                     // Fallback to placeholder
-                    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI2MCIgeT0iNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+SW1hZ2U8L3RleHQ+PC9zdmc+';
+                    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjgwIiB2aWV3Qm94PSIwIDAgMTAwIDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iODAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI1MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+SW1hZ2U8L3RleHQ+PC9zdmc+';
                 };
                 
+                const name = document.createElement('div');
+                name.className = 'catalog-item-name';
+                name.textContent = variant.name;
+
                 item.appendChild(img);
+                item.appendChild(name);
                 catalogGrid.appendChild(item);
             });
             
-            catalog.style.display = 'flex';
+            catalog.classList.add('visible'); // Slide in
             
             // Analytics
             trackEvent('spot_opened', { zone: zoneId });
         }
         
-        function selectVariant(variantIndex) {
+        function previewVariant(variantIndex) {
             gameState.selectedVariant = variantIndex;
+            const zoneId = gameState.currentZone;
             
-            // Update visual selection
+            // Highlight in catalog
             document.querySelectorAll('.catalog-item').forEach((item, index) => {
                 item.classList.toggle('selected', index === variantIndex);
             });
             
-            // Analytics
-            trackEvent('variant_preview', { 
-                zone: gameState.currentZone, 
-                variant: variantIndex 
+            // Preview in scene
+            replaceObject(zoneId, variantIndex + 1);
+        }
+
+        function revertPreview() {
+            const zoneId = gameState.currentZone;
+            const lastConfirmedVariant = gameState.confirmedZones[zoneId];
+            
+            // Remove highlight
+            document.querySelectorAll('.catalog-item').forEach(item => {
+                item.classList.remove('selected');
             });
+
+            if (lastConfirmedVariant !== undefined) {
+                replaceObject(zoneId, lastConfirmedVariant + 1);
+            } else {
+                // If nothing was ever confirmed, hide the object layer
+                const objectLayer = document.getElementById(`layer-${zoneId}`);
+                if (objectLayer) objectLayer.style.display = 'none';
+            }
+        }
+
+        function confirmVariant(variantIndex) {
+            const zoneId = gameState.currentZone;
+            gameState.selectedVariant = variantIndex; // Set it one last time
+            approveSelection(); // Use existing approval logic
         }
         
         function approveSelection() {
@@ -763,7 +804,7 @@
         }
         
         function closeCatalog() {
-            document.getElementById('catalog').style.display = 'none';
+            document.getElementById('catalog').classList.remove('visible'); // Slide out
             gameState.selectedVariant = null;
             gameState.currentZone = null;
         }
