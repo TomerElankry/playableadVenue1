@@ -64,7 +64,7 @@
         cursor: pointer;
         transform: translate(-50%, -50%);
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out, opacity 0.3s ease; /* Add opacity transition */
         display: flex; /* Add flexbox for centering */
         align-items: center; /* Center vertically */
         justify-content: center; /* Center horizontally */
@@ -321,18 +321,18 @@
         background-color: #F5EBE0; /* Cozy cream color */
         border-radius: 50px;
         font-size: 32px;
-        color: #34495E;
+        color: #4E443C; /* Dark brown text */
         cursor: pointer;
         pointer-events: auto;
         border: none;
         box-shadow: 0 8px 15px rgba(0,0,0,0.2);
         transition: all 0.2s ease;
         margin-top: 20px; /* Add space above the button */
+        font-family: 'Georgia', 'Times New Roman', serif; /* Match font */
     }
     
     .play-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 20px rgba(0,0,0,0.25);
+        background-color: #BFD8BD; /* Cozy sage green on hover */
     }
     
     .character-dialogue {
@@ -663,6 +663,13 @@
         }
         
         function openCatalog(zoneId) {
+            // Fade out the hotspot
+            const hotspot = document.getElementById(`hotspot-${zoneId}`);
+            if (hotspot) {
+                hotspot.style.opacity = '0';
+                hotspot.style.pointerEvents = 'none';
+            }
+
             gameState.currentZone = zoneId;
             const zoneConfig = CONFIG.application.zonesConfig[zoneId];
             const catalog = document.getElementById('catalog');
@@ -676,8 +683,8 @@
                 const item = document.createElement('div');
                 item.className = 'catalog-item';
                 item.onmouseenter = () => previewVariant(index);
-                item.onmouseleave = () => revertPreview();
-                item.onclick = () => confirmVariant(index);
+                item.onmouseleave = () => revertPreview(); // Still needed to revert hover
+                item.onclick = () => confirmVariant(index); // This will now be the only click
                 
                 const img = document.createElement('img');
                 img.src = `assets/thumbs/${zoneId}/${index + 1}.png?v=${Date.now()}`;
@@ -717,26 +724,27 @@
 
         function revertPreview() {
             const zoneId = gameState.currentZone;
+            // In the new flow, if a choice has been made, it's permanent.
+            // So we only revert if nothing has been confirmed for this zone yet.
             const lastConfirmedVariant = gameState.confirmedZones[zoneId];
-            
-            // Remove highlight
-            document.querySelectorAll('.catalog-item').forEach(item => {
-                item.classList.remove('selected');
-            });
 
-            if (lastConfirmedVariant !== undefined) {
-                replaceObject(zoneId, lastConfirmedVariant + 1);
-            } else {
-                // If nothing was ever confirmed, hide the object layer
+            if (lastConfirmedVariant === undefined) {
                 const objectLayer = document.getElementById(`layer-${zoneId}`);
                 if (objectLayer) objectLayer.style.display = 'none';
             }
         }
 
         function confirmVariant(variantIndex) {
+            // In this new flow, the first click is the final confirmation.
             const zoneId = gameState.currentZone;
-            gameState.selectedVariant = variantIndex; // Set it one last time
-            approveSelection(); // Use existing approval logic
+            gameState.selectedVariant = variantIndex;
+            
+            // Highlight the final choice briefly
+            document.querySelectorAll('.catalog-item').forEach((item, index) => {
+                item.classList.toggle('selected', index === variantIndex);
+            });
+
+            approveSelection(); // Directly call the approval logic
         }
         
         function approveSelection() {
@@ -752,8 +760,7 @@
             
             // Update hotspot appearance
             const hotspot = document.getElementById(`hotspot-${zoneId}`);
-            hotspot.classList.add('confirmed');
-            hotspot.textContent = '✓'; // Change to a checkmark
+            // Hotspot is already hidden, so no need to change its appearance
             
             closeCatalog();
             
