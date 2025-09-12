@@ -65,6 +65,12 @@
         transform: translate(-50%, -50%);
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         transition: all 0.2s ease-in-out;
+        display: flex; /* Add flexbox for centering */
+        align-items: center; /* Center vertically */
+        justify-content: center; /* Center horizontally */
+        font-size: 40px; /* Size of the plus sign */
+        color: white; /* Color of the plus sign */
+        font-weight: bold; /* Make the plus sign thicker */
     }
     
     .hotspot:hover {
@@ -73,16 +79,9 @@
     }
 
     .hotspot.confirmed {
-        background: rgba(0, 255, 0, 0.3);
-        border-color: #00ff00;
-        animation: none;
-    }
-    
-    .hotspot.confirmed::after {
-        content: "✓";
-        color: #00ff00;
-        font-weight: bold;
-        font-size: 20px;
+        background: rgba(76, 175, 80, 0.7); /* Green to indicate completion */
+        border-color: #fff;
+        font-size: 40px; /* Ensure V sign is same size as plus */
     }
     
     .catalog {
@@ -623,6 +622,7 @@
                 const hotspot = document.createElement('div');
                 hotspot.className = 'hotspot';
                 hotspot.id = `hotspot-${zoneId}`;
+                hotspot.textContent = '+'; // Add the plus sign
                 hotspot.onclick = () => openCatalog(zoneId);
                 hotspot.setAttribute('data-zone', zoneId);
                 
@@ -712,6 +712,7 @@
             // Update hotspot appearance
             const hotspot = document.getElementById(`hotspot-${zoneId}`);
             hotspot.classList.add('confirmed');
+            hotspot.textContent = '✓'; // Change to a checkmark
             
             closeCatalog();
             
