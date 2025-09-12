@@ -20,17 +20,17 @@
     }
     
     #gameContainer {
-        width: 720px;
-        height: 1280px;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(1);
-        transform-origin: center center;
-        background-size: 100% 100%; /* Changed from contain to 100% 100% to fill the scaled container */
+        width: 100vw; /* Use viewport units to fill screen */
+        height: 100vh;
+        position: relative;
+        transform: none;
+        background-size: 100% 100%; /* This will stretch the image */
         background-position: center;
         background-repeat: no-repeat;
+        overflow: hidden;
     }
+
+    /* #gameStage is no longer needed */
     
     .object-layer {
         position: absolute;
@@ -56,22 +56,22 @@
     
     .hotspot {
         position: absolute;
-        width: 50px;
-        height: 50px;
-        background: rgba(255, 255, 255, 0.4);
+        width: 60px; /* Larger size */
+        height: 60px;
+        background: rgba(128, 128, 128, 0.5); /* Semi-transparent grey */
         border: 2px solid #fff;
         border-radius: 50%;
         cursor: pointer;
-        animation: pulse 2s infinite;
         transform: translate(-50%, -50%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        transition: all 0.2s ease-in-out;
     }
     
+    .hotspot:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+        background: rgba(128, 128, 128, 0.7);
+    }
+
     .hotspot.confirmed {
         background: rgba(0, 255, 0, 0.3);
         border-color: #00ff00;
@@ -83,12 +83,6 @@
         color: #00ff00;
         font-weight: bold;
         font-size: 20px;
-    }
-    
-    @keyframes pulse {
-        0% { transform: translate(-50%, -50%) scale(1); }
-        50% { transform: translate(-50%, -50%) scale(1.1); }
-        100% { transform: translate(-50%, -50%) scale(1); }
     }
     
     .catalog {
@@ -407,20 +401,8 @@
 	
     <script>
     // Fit 720x1280 to window (~98%) while preserving aspect
-    function resizeGame() {
-        var baseWidth = 720;
-        var baseHeight = 1280;
-        var viewportWidth = window.innerWidth;
-        var viewportHeight = window.innerHeight;
-        var maxScale = Math.min(viewportWidth / baseWidth, viewportHeight / baseHeight);
-        window.currentScale = maxScale; // Make scale global
-        var game = document.getElementById('gameContainer');
-        if (game) {
-            game.style.transform = 'translate(-50%, -50%) scale(' + window.currentScale + ')';
-        }
-    }
-    window.addEventListener('resize', resizeGame);
-    window.addEventListener('orientationchange', resizeGame);
+    /* resizeGame function is no longer needed for stretch-to-fit */
+    
     var CONFIG = {
         "googlePlayUrl": "https://www.venuegame.co",
         "appStoreUrl": "https://www.venuegame.co",
@@ -558,9 +540,6 @@
 
         <!-- Add missing introScreen element -->
         <div id="introScreen" class="hidden"></div>
-
-        <!-- Tutorial Bubble & Hand -->
-        <!-- <div id="tutorialBubble"> ... </div> This is now replaced by the new intro UI -->
         
         <!-- Catalog Modal -->
         <div id="catalog" class="catalog">
@@ -647,9 +626,13 @@
                 hotspot.onclick = () => openCatalog(zoneId);
                 hotspot.setAttribute('data-zone', zoneId);
                 
-                // Position hotspot relative to center of game container
-                hotspot.style.left = `calc(50% + ${zoneConfig.dot.x}px)`;
-                hotspot.style.top = `calc(50% + ${zoneConfig.dot.y}px)`;
+                // Position hotspot using percentages for stretch-to-fit
+                const baseWidth = 720;
+                const baseHeight = 1280;
+                const xPercent = 50 + (zoneConfig.dot.x / baseWidth) * 100;
+                const yPercent = 50 + (zoneConfig.dot.y / baseHeight) * 100;
+                hotspot.style.left = `${xPercent}%`;
+                hotspot.style.top = `${yPercent}%`;
                 
                 hotspotsContainer.appendChild(hotspot);
                 
@@ -846,14 +829,14 @@
         // Initialize game when page loads
         window.addEventListener('load', function() {
             initializeHotspots();
-            resizeGame(); // Initial scaling
+            // resizeGame(); // No longer needed
             
             // Hotspots should be initially disabled until "Play" is clicked.
             const hotspots = document.querySelectorAll('.hotspot');
             hotspots.forEach(h => h.style.pointerEvents = 'none');
 
             trackEvent('playable_start');
-            repositionHotspots(); // Initial repositioning of hotspots
+            // repositionHotspots(); // No longer needed with percentage positioning
         });
 
         // The old tutorial system is no longer needed in the same way.
