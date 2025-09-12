@@ -168,18 +168,19 @@
         border: none;
         border-radius: 25px;
         cursor: pointer;
-        font-size: 16px;
+        font-size: 24px; /* Larger font size for CTA */
         font-weight: bold;
         transition: all 0.3s ease;
+        min-width: 250px; /* Ensure button is a good size */
     }
     
     .btn-primary {
-        background: #007bff;
-        color: white;
+        background: #BFD8BD; /* Cozy sage green */
+        color: #4E443C; /* Dark brown text */
     }
     
     .btn-primary:hover {
-        background: #0056b3;
+        background: #a9c7aa; /* Slightly darker green on hover */
     }
     
     .btn-secondary {
@@ -197,14 +198,30 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(0, 0, 0, 0.5); /* Semi-transparent dark overlay */
         display: none;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        color: white;
+        color: #F5EBE0; /* Cozy cream color for text */
         text-align: center;
         z-index: 500;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .final-screen .final-title {
+        font-size: 80px;
+        font-family: 'Georgia', serif;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        color: #BFD8BD; /* Cozy sage green */
+    }
+
+    .final-screen .final-subtitle {
+        font-size: 30px;
+        font-family: 'Georgia', serif;
+        text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+        margin-top: 10px;
     }
     
     .stars {
@@ -360,7 +377,7 @@
     
     .speech-bubble {
         position: relative;
-        background: #F5EBE0; /* Warmer cream color */
+        background: rgba(245, 235, 224, 0.9); /* Warmer cream color with 90% opacity */
         border-radius: 35px; /* Softer corners */
         padding: 25px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.15);
@@ -373,7 +390,38 @@
         gap: 20px;
     }
 
-    /* REMOVED .speech-bubble::before rule */
+    /* Achievement Effect */
+    .achievement-container {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        width: 100px;
+        height: 100px;
+        pointer-events: none;
+        z-index: 2000;
+    }
+
+    .star-effect {
+        position: absolute;
+        font-size: 30px;
+        color: #FFD700;
+        opacity: 0;
+        animation: jump-and-fade 1s ease-out forwards;
+    }
+
+    @keyframes jump-and-fade {
+        0% {
+            transform: translateY(0) scale(0.5);
+            opacity: 1;
+        }
+        50% {
+            transform: translateY(-50px) scale(1.2);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-80px) scale(0.8);
+            opacity: 0;
+        }
+    }
     
     .dialogue-content { /* New wrapper for text */
         display: flex;
@@ -573,8 +621,8 @@
         
         <!-- Final Screen -->
         <div id="finalScreen" class="final-screen">
-            <div class="intro-title">Congratulations!</div>
-            <div class="intro-subtitle">Your cabin design is complete!</div>
+            <div class="final-title">Congratulations!</div>
+            <div class="final-subtitle">Your cabin is complete!</div>
             <div class="stars">
                 <span class="star">⭐</span>
                 <span class="star">⭐</span>
@@ -582,7 +630,7 @@
                 <span class="star">⭐</span>
                 <span class="star">⭐</span>
             </div>
-            <button class="btn btn-primary" onclick="downloadGame()">Download Game</button>
+            <button class="btn btn-primary" onclick="downloadGame()">Click here!</button>
         </div>
     </div>
 
@@ -744,9 +792,41 @@
                 item.classList.toggle('selected', index === variantIndex);
             });
 
+            // Trigger achievement effect
+            const hotspot = document.getElementById(`hotspot-${zoneId}`);
+            if (hotspot) {
+                createAchievementEffect(hotspot.style.left, hotspot.style.top);
+            }
+
             approveSelection(); // Directly call the approval logic
         }
         
+        function createAchievementEffect(x, y) {
+            const container = document.getElementById('gameContainer');
+            const effectContainer = document.createElement('div');
+            effectContainer.className = 'achievement-container';
+            effectContainer.style.left = x;
+            effectContainer.style.top = y;
+
+            for (let i = 0; i < 3; i++) { // Create 3 stars
+                const star = document.createElement('div');
+                star.className = 'star-effect';
+                star.textContent = '⭐';
+                
+                // Randomize horizontal position and animation delay
+                star.style.left = `${Math.random() * 80 - 40}px`;
+                star.style.animationDelay = `${i * 0.15}s`;
+                
+                effectContainer.appendChild(star);
+            }
+
+            container.appendChild(effectContainer);
+
+            setTimeout(() => {
+                effectContainer.remove();
+            }, 1200); // Remove after the longest animation finishes
+        }
+
         function approveSelection() {
             if (gameState.selectedVariant === null || !gameState.currentZone) return;
             
