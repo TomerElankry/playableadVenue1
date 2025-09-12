@@ -47,7 +47,7 @@
     }
     
     #layer-bed_frame {
-        background-size: contain !important;
+        background-size: 100% 100% !important;
         background-position: center center !important;
         top: 0 !important;
     }
@@ -220,6 +220,30 @@
     .hidden {
         display: none !important;
     }
+    
+    /* Debug HUD */
+    .debug-hud {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        z-index: 2000;
+        max-width: 300px;
+    }
+    
+    .debug-hud h4 {
+        margin: 0 0 10px 0;
+        color: #00ff00;
+    }
+    
+    .debug-hud .coord {
+        margin: 2px 0;
+    }
 
     /* Tutorial UI */
     #tutorialBubble {
@@ -294,12 +318,12 @@
             }
         },
         "application": {
-            "showDebugInfo": false,
+            "showDebugInfo": true,
             "hintDelay": 3000,
             "zonesConfig": {
                 "windows": {
                     "view": "items/windows/view/default",
-                    "dot": {"x": -216, "y": -243},
+                    "dot": {"x": -250, "y": -280},
                     "variants": [
                         {"item": "items/windows/item/1", "view": "items/windows/view/1", "name": "Modern Frame"},
                         {"item": "items/windows/item/2", "view": "items/windows/view/2", "name": "Classic Wood"},
@@ -329,7 +353,7 @@
                 },
                 "bed_frame": {
                     "view": "items/bed_frame/view/default",
-                    "dot": {"x": 162, "y": 280},
+                    "dot": {"x": -100, "y": 512},
                     "variants": [
                         {"item": "items/bed_frame/item/1", "view": "items/bed_frame/view/1", "name": "Oak Platform"},
                         {"item": "items/bed_frame/item/2", "view": "items/bed_frame/view/2", "name": "Metal Frame"},
@@ -344,7 +368,7 @@
                 },
                 "bed_sheets": {
                     "view": "items/bed_sheets/view/default",
-                    "dot": {"x": -12, "y": 239},
+                    "dot": {"x": -50, "y": 380},
                     "variants": [
                         {"item": "items/bed_sheets/item/1", "view": "items/bed_sheets/view/1", "name": "White Linen"},
                         {"item": "items/bed_sheets/item/2", "view": "items/bed_sheets/view/2", "name": "Navy Cotton"},
@@ -359,7 +383,7 @@
                 },
                 "floor": {
                     "view": "items/floor/view/default",
-                    "dot": {"x": -270, "y": 311},
+                    "dot": {"x": -250, "y": 550},
                     "variants": [
                         {"item": "items/floor/item/1", "view": "items/floor/view/1", "name": "Oak Hardwood"},
                         {"item": "items/floor/item/2", "view": "items/floor/view/2", "name": "Stone Tile"},
@@ -394,6 +418,9 @@
         <!-- Game Hotspots -->
         <div id="hotspots"></div>
 
+        <!-- Add missing introScreen element -->
+        <div id="introScreen" class="hidden"></div>
+
         <!-- Tutorial Bubble & Hand -->
         <div id="tutorialBubble">
             <div class="tutorial-message">Help us decorate the dream cabin!</div>
@@ -410,6 +437,13 @@
                     <button class="btn btn-primary" onclick="approveSelection()">Approve</button>
                 </div>
             </div>
+        </div>
+        
+        <!-- Debug HUD -->
+        <div id="debugHud" class="debug-hud" style="display: none;">
+            <h4>Debug Info</h4>
+            <div class="coord">Mouse: <span id="mouseCoords">0, 0</span></div>
+            <div class="coord">Container: <span id="containerCoords">0, 0</span></div>
         </div>
         
         <!-- Final Screen -->
@@ -435,11 +469,20 @@
         };
         
         function startDesign() {
-            document.getElementById('introScreen').classList.add('hidden');
+            const introScreen = document.getElementById('introScreen');
+            if (introScreen) introScreen.classList.add('hidden');
+            
             initializeHotspots();
             // Enable hotspots
             document.querySelectorAll('.hotspot').forEach(h => h.style.pointerEvents = 'auto');
             dismissTutorial();
+            
+            // Show debug HUD if enabled
+            if (CONFIG.application.showDebugInfo) {
+                document.getElementById('debugHud').style.display = 'block';
+                setupDebugMode();
+            }
+            
             // Analytics - no intro_design_click as there is no separate intro screen
         }
         
@@ -461,6 +504,10 @@
                 hotspot.id = `hotspot-${zoneId}`;
                 hotspot.onclick = () => openCatalog(zoneId);
                 hotspot.setAttribute('data-zone', zoneId);
+                
+                // Position hotspot relative to center of game container
+                hotspot.style.left = `calc(50% + ${zoneConfig.dot.x}px)`;
+                hotspot.style.top = `calc(50% + ${zoneConfig.dot.y}px)`;
                 
                 hotspotsContainer.appendChild(hotspot);
                 
@@ -636,6 +683,24 @@
             }
         }
         
+        function setupDebugMode() {
+            const gameContainer = document.getElementById('gameContainer');
+            const mouseCoords = document.getElementById('mouseCoords');
+            const containerCoords = document.getElementById('containerCoords');
+            
+            // Update mouse coordinates
+            document.addEventListener('mousemove', function(e) {
+                const rect = gameContainer.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const relativeX = e.clientX - centerX;
+                const relativeY = e.clientY - centerY;
+                
+                mouseCoords.textContent = `${relativeX}, ${relativeY}`;
+                containerCoords.textContent = `${rect.width}x${rect.height}`;
+            });
+        }
+        
         // Initialize game when page loads
         window.addEventListener('load', function() {
             initializeHotspots();
@@ -720,14 +785,6 @@
         }
 
         function repositionHotspots() {
-            const gameContainer = document.getElementById('gameContainer');
-            if (!gameContainer) {
-                console.error('gameContainer not found for hotspot repositioning.');
-                return;
-            }
-            const gameRect = gameContainer.getBoundingClientRect();
-            const currentScale = window.currentScale || 1; // Use global scale, default to 1
-
             document.querySelectorAll('.hotspot').forEach(hotspot => {
                 const zoneId = hotspot.getAttribute('data-zone');
                 const zoneConfig = CONFIG.application.zonesConfig[zoneId];
@@ -736,17 +793,10 @@
                     return;
                 }
 
-                // Calculate logical center of the game (720x1280)
-                const gameCenterX_logical = 720 / 2;
-                const gameCenterY_logical = 1280 / 2;
-
-                // Calculate hotspot's logical position relative to game's logical center
-                const hotspotX_logical = gameCenterX_logical + zoneConfig.dot.x;
-                const hotspotY_logical = gameCenterY_logical + zoneConfig.dot.y;
-
-                // Convert to scaled pixel positions for CSS
-                hotspot.style.left = `${hotspotX_logical * currentScale + gameRect.left}px`;
-                hotspot.style.top = `${hotspotY_logical * currentScale + gameRect.top}px`;
+                // Position hotspots relative to the center of the game container
+                // This works with the CSS transform scaling system
+                hotspot.style.left = `calc(50% + ${zoneConfig.dot.x}px)`;
+                hotspot.style.top = `calc(50% + ${zoneConfig.dot.y}px)`;
             });
         }
     </script>
