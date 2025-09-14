@@ -90,7 +90,7 @@
         right: -400px; /* Start off-screen */
         width: 350px;
         height: 100%;
-        background: rgba(245, 235, 224, 0.9); /* Cozy cream color, semi-transparent */
+        background: rgba(245, 235, 224, 0.8); /* Cozy cream color, 80% opacity */
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -141,6 +141,11 @@
     .catalog-item.selected {
         border-color: #B5651D;
         background: rgba(191, 216, 189, 0.8); /* Cozy sage green */
+    }
+
+    .catalog-item.tutorial-highlight {
+        background-color: rgba(191, 216, 189, 0.8); /* Cozy sage green */
+        border: 2px solid #B5651D;
     }
     
     .catalog-item img {
@@ -354,14 +359,15 @@
     
     .character-dialogue {
         position: absolute;
-        top: 20%; /* Adjusted vertical position */
-        left: 50%;
-        transform: translateX(-50%); /* Horizontally center */
+        top: 20px; /* Position at the top */
+        left: 20px; /* Position on the left */
+        transform: none; /* Remove centering transform */
         display: flex;
         align-items: center;
         z-index: 110;
         pointer-events: none;
-        animation: float 3s ease-in-out infinite; /* Add floating animation */
+        animation: none; /* Remove floating animation */
+        transition: opacity 0.5s ease; /* Add transition for fade-out */
     }
 
     .character-portrait {
@@ -378,18 +384,43 @@
     .speech-bubble {
         position: relative;
         background: rgba(245, 235, 224, 0.9); /* Warmer cream color with 90% opacity */
-        border-radius: 35px; /* Softer corners */
-        padding: 25px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        width: 500px; /* Wider to accommodate photo */
+        border-radius: 25px; /* Softer corners */
+        padding: 15px 20px; /* Smaller padding */
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        width: 350px; /* Narrower bubble */
         font-family: 'Georgia', 'Times New Roman', serif;
         cursor: default;
         display: flex; /* Arrange content and photo side-by-side */
         align-items: center;
         justify-content: space-between;
-        gap: 20px;
+        gap: 15px;
     }
 
+    .tutorial-hand {
+        position: absolute;
+        width: 100px;
+        height: auto;
+        z-index: 9999;
+        pointer-events: none;
+        transition: top 0.5s ease-in-out, left 0.5s ease-in-out, opacity 0.3s ease;
+        transform-origin: center;
+        opacity: 0;
+        visibility: hidden;
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
+        animation: hand-float 1.5s infinite alternate ease-in-out;
+    }
+
+    @keyframes hand-float {
+        0% {
+            transform: translateY(0);
+        }
+        100% {
+            transform: translateY(-5px);
+        }
+    }
+
+    /* Remove the old point-and-float animation */
+    
     /* Achievement Effect */
     .achievement-container {
         position: absolute;
@@ -437,19 +468,19 @@
     }
     
     .speech-bubble .dialogue-text {
-        font-size: 26px;
+        font-size: 22px; /* Smaller text */
         color: #4E443C;
         line-height: 1.2;
         margin-top: 5px; /* Reduced space */
     }
 
-    .play-button-wrapper {
-        width: 100%;
-        text-align: left; /* Align button to the left */
-        margin-top: 15px;
-        pointer-events: auto;
+    .fade-out {
+        opacity: 0;
+        pointer-events: none;
     }
 
+    /* Remove play-button-wrapper styles */
+    
     @keyframes float {
         0% {
             transform: translate(-50%, 0px);
@@ -590,17 +621,16 @@
         <!-- New Intro UI -->
         <div id="introContainer">
             <div class="character-dialogue">
+                <div class="character-portrait"></div>
                 <div class="speech-bubble">
                     <div class="dialogue-content">
-                        <div class="character-name">Hillary Stone</div>
-                        <div class="dialogue-text">Help me dream the dream cabin!</div>
-                        <div class="play-button-wrapper">
-                            <button class="play-button" onclick="startDesign()">Play</button>
-                        </div>
+                        <div class="character-name">Hillary</div>
+                        <div class="dialogue-text">Help me design the dream cabin!</div>
                     </div>
-                    <div class="character-portrait"></div>
+                    <!-- Play button is removed -->
                 </div>
             </div>
+            <!-- Old tutorial hand is removed from here -->
         </div>
 
         <!-- Add missing introScreen element -->
@@ -610,6 +640,8 @@
         <div id="catalog" class="catalog">
             <h2 id="catalogTitle" class="catalog-title">Choose Your Style</h2>
             <div id="catalogGrid" class="catalog-grid"></div>
+            <!-- Add tutorial hand inside the catalog -->
+            <img src="assets/ui/FloatingHand.png" id="tutorialHand" class="tutorial-hand" alt="Guiding hand">
         </div>
         
         <!-- Debug HUD -->
@@ -640,31 +672,26 @@
             selectedVariant: null,
             currentZone: null
         };
+
+        let isTutorialActive = true;
+        let tutorialInterval = null;
+        let isMobileDevice = false;
         
-        function startDesign() {
-            // Fade out the intro container
-            const introContainer = document.getElementById('introContainer');
-            if (introContainer) {
-                introContainer.style.transition = 'opacity 0.5s ease';
-                introContainer.style.opacity = '0';
-                setTimeout(() => {
-                    introContainer.remove(); // Remove from DOM
-                }, 500);
-            }
-            
-            initializeHotspots();
-            // Enable hotspots
-            document.querySelectorAll('.hotspot').forEach(h => h.style.pointerEvents = 'auto');
-            dismissTutorial();
-            
-            // Show debug HUD if enabled
-            if (CONFIG.application.showDebugInfo) {
-                document.getElementById('debugHud').style.display = 'block';
-                setupDebugMode();
-            }
-            
-            // Analytics - no intro_design_click as there is no separate intro screen
+        // Function to detect if the user is on a mobile device
+        function detectMobileDevice() {
+            return (
+                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                (window.innerWidth <= 768)
+            );
         }
+        
+        // Check if we're on mobile when the page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            isMobileDevice = detectMobileDevice();
+            console.log("Device detected as: " + (isMobileDevice ? "mobile" : "desktop"));
+        });
+        
+        // The startDesign function is no longer needed as the game starts immediately.
         
         function initializeHotspots() {
             const hotspotsContainer = document.getElementById('hotspots');
@@ -685,6 +712,11 @@
                 hotspot.textContent = '+'; // Add the plus sign
                 hotspot.onclick = () => openCatalog(zoneId);
                 hotspot.setAttribute('data-zone', zoneId);
+
+                // Hide the windows hotspot initially since the tutorial opens it
+                if (zoneId === 'windows') {
+                    hotspot.style.display = 'none';
+                }
                 
                 // Position hotspot using percentages for stretch-to-fit
                 const baseWidth = 720;
@@ -718,6 +750,9 @@
                 hotspot.style.pointerEvents = 'none';
             }
 
+            // If tutorial is active, clicking should stop it.
+            // Removed erroneous tutorial stop here; tutorial should run on initial windows open.
+
             gameState.currentZone = zoneId;
             const zoneConfig = CONFIG.application.zonesConfig[zoneId];
             const catalog = document.getElementById('catalog');
@@ -732,7 +767,18 @@
                 item.className = 'catalog-item';
                 item.onmouseenter = () => previewVariant(index);
                 item.onmouseleave = () => revertPreview(); // Still needed to revert hover
-                item.onclick = () => confirmVariant(index); // This will now be the only click
+                
+                // Direct event handler for first click to remove intro
+                item.addEventListener('click', function() {
+                    // Remove intro container immediately on any catalog item click
+                    const introContainer = document.getElementById('introContainer');
+                    if (introContainer) {
+                        introContainer.parentNode.removeChild(introContainer);
+                    }
+                    
+                    // Then handle the normal variant confirmation
+                    confirmVariant(index);
+                }, {once: true}); // This ensures the handler runs only once
                 
                 const img = document.createElement('img');
                 img.src = `assets/thumbs/${zoneId}/${index + 1}.png?v=${Date.now()}`;
@@ -755,6 +801,11 @@
             
             // Analytics
             trackEvent('spot_opened', { zone: zoneId });
+            
+            // If this is the tutorial, start the hand animation
+            if (isTutorialActive && zoneId === 'windows') {
+                setTimeout(startWindowsTutorial, 600); // Increased delay to ensure catalog is visible
+            }
         }
         
         function previewVariant(variantIndex) {
@@ -783,9 +834,30 @@
         }
 
         function confirmVariant(variantIndex) {
-            // In this new flow, the first click is the final confirmation.
             const zoneId = gameState.currentZone;
             gameState.selectedVariant = variantIndex;
+
+            // If the tutorial is active, this click ends it.
+            if (isTutorialActive) {
+                stopTutorial();
+                // Remove the entire intro container immediately
+                const introContainer = document.getElementById('introContainer');
+                if (introContainer) {
+                    introContainer.remove();
+                }
+            }
+
+            // Update the view with the selected variant
+            const zoneElement = document.getElementById(`zone-${zoneId}`);
+            if (zoneElement) {
+                // This part of the logic needs to be adapted to the new structure
+                // For now, we'll just update the hotspot if it's the windows zone
+                const hotspot = document.getElementById(`hotspot-${zoneId}`);
+                if (hotspot) {
+                    hotspot.style.opacity = '0'; // Hide hotspot
+                    hotspot.style.pointerEvents = 'none'; // Disable clicks
+                }
+            }
             
             // Highlight the final choice briefly
             document.querySelectorAll('.catalog-item').forEach((item, index) => {
@@ -912,8 +984,75 @@
             trackEvent('rating_shown');
         }
 
-        // Tutorial system - REMOVED OLD TUTORIAL LOGIC
-        // All old tutorial-related functions and data structures are removed.
+        function startWindowsTutorial() {
+            const hand = document.getElementById('tutorialHand');
+            const catalog = document.getElementById('catalog');
+            const items = catalog.querySelectorAll('.catalog-item');
+
+            if (!hand || items.length < 3) { return; }
+
+            hand.style.display = 'block';
+            setTimeout(() => {
+                hand.style.visibility = 'visible';
+                hand.style.opacity = '1';
+            }, 100);
+
+            let currentIndex = 0;
+            const animateHand = () => {
+                if (!isTutorialActive) return;
+
+                items.forEach(item => item.classList.remove('tutorial-highlight'));
+
+                const item = items[currentIndex];
+                if (!item) return;
+
+                const itemRect = item.getBoundingClientRect();
+                const catalogRect = catalog.getBoundingClientRect();
+
+                item.classList.add('tutorial-highlight');
+                
+                hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 10}px`;
+                hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 10}px`;
+
+                previewVariant(currentIndex);
+                
+                currentIndex = (currentIndex + 1) % items.length;
+            };
+
+            const handleUserInteraction = () => {
+                if (isTutorialActive) {
+                    stopTutorial();
+                }
+            };
+
+            catalog.addEventListener('mousemove', handleUserInteraction, { once: true });
+            catalog.addEventListener('touchstart', handleUserInteraction, { once: true });
+            
+            animateHand();
+            tutorialInterval = setInterval(animateHand, 2000); // Set to 2 seconds
+        }
+
+        function stopTutorial() {
+            if (!isTutorialActive) return; 
+            isTutorialActive = false;
+
+            if (tutorialInterval) {
+                clearInterval(tutorialInterval);
+                tutorialInterval = null;
+            }
+            
+            const hand = document.getElementById('tutorialHand');
+            if (hand) {
+                hand.style.opacity = '0';
+                setTimeout(() => {
+                    hand.style.display = 'none';
+                }, 300);
+            }
+            
+            document.querySelectorAll('.catalog-item.tutorial-highlight').forEach(item => {
+                item.classList.remove('tutorial-highlight');
+            });
+        }
         
         function downloadGame() {
             // Analytics
@@ -958,14 +1097,17 @@
         // Initialize game when page loads
         window.addEventListener('load', function() {
             initializeHotspots();
-            // resizeGame(); // No longer needed
             
-            // Hotspots should be initially disabled until "Play" is clicked.
-            const hotspots = document.querySelectorAll('.hotspot');
-            hotspots.forEach(h => h.style.pointerEvents = 'none');
+            // Hotspots are now active from the start, except for the one in tutorial
+            document.querySelectorAll('.hotspot').forEach(h => h.style.pointerEvents = 'auto');
 
             trackEvent('playable_start');
-            // repositionHotspots(); // No longer needed with percentage positioning
+
+            // Immediately open the windows catalog to start the tutorial
+            setTimeout(() => {
+                openCatalog('windows');
+                // The tutorial animation will be started from within openCatalog
+            }, 500); // Short delay to allow assets to load
         });
 
         // The old tutorial system is no longer needed in the same way.
@@ -987,6 +1129,8 @@
                 hotspot.style.top = `calc(50% + ${zoneConfig.dot.y}px)`;
             });
         }
+
+        // The old positionTutorialHand is no longer needed.
     </script>
 </body>
 </html>

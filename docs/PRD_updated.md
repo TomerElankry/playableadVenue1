@@ -36,6 +36,16 @@ There are five distinct interactive zones in the cabin, each marked by an animat
 *   A "Download" button is present to direct users to the appropriate app store.
 *   The CTA links to both the Google Play Store and the Apple App Store.
 
+### 4.6. Tutorial Hand Guidance
+*   At the beginning of the ad, the **Windows catalog** opens automatically on the left side.
+*   A **hand indicator** animates across the different window options, starting from the first option and moving sequentially.
+*   While pointing:
+    *   The **option bubble** turns green.
+    *   The corresponding window object is applied in the scene.
+*   The hand remains for 1.5 seconds on each option before moving to the next.
+*   The tutorial ends immediately upon user interaction (mouse movement on desktop or touch on mobile).
+*   The actual gameplay flow starts once the user clicks/taps on a window option.
+
 ### 4.5. Intro Screen
 *   The ad begins with an introductory overlay or message (e.g., "Help us decorate the cabin!") to provide context and prompt the user to start.
 
