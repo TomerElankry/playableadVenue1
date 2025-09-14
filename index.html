@@ -766,7 +766,7 @@
                 const item = document.createElement('div');
                 item.className = 'catalog-item';
                 item.onmouseenter = () => previewVariant(index);
-                item.onmouseleave = () => revertPreview(); // Still needed to revert hover
+                // Remove mouseleave revert to keep last preview active until another hover or confirm
                 
                 // Direct event handler for first click to remove intro
                 item.addEventListener('click', function() {
@@ -932,34 +932,121 @@
         }
         
         function replaceObject(zoneId, variantNumber) {
-            
             const objectLayer = document.getElementById(`layer-${zoneId}`);
-            if (objectLayer) {
-                const imagePath = `assets/items/${zoneId}/view/${variantNumber}.png?v=${Date.now()}`;
-                
-                // Clear any existing styles that might interfere
-                objectLayer.style.backgroundImage = '';
-                
-                // Set the new background image
-                objectLayer.style.backgroundImage = `url(${imagePath})`;
+            if (!objectLayer) {
+                console.error(`❌ Object layer not found for ${zoneId}`);
+                return;
+            }
+
+            // Remove any previous temporary transition layers for this zone
+            document.querySelectorAll(`.object-layer.temp-layer[data-zone="${zoneId}"]`).forEach(el => {
+                if (el && el.parentNode) el.parentNode.removeChild(el);
+            });
+
+            const imagePathPng = `assets/items/${zoneId}/view/${variantNumber}.png?v=${Date.now()}`;
+            const imagePathJpg = imagePathPng.replace('.png?v=', '.jpg?v=');
+
+            // Preload target image to avoid flicker during transition
+            const preload = new Image();
+            preload.onload = () => {
+                if (zoneId === 'chandelier') {
+                    // Instant swap with slight dip to avoid overlap and avoid blank
+                    const prevTransition = objectLayer.style.transition;
+                    objectLayer.style.display = 'block';
+                    // Disable transitions to set dip instantly
+                    objectLayer.style.transition = 'none';
+                    objectLayer.style.opacity = '0.85';
+                    // Force reflow
+                    // eslint-disable-next-line no-unused-expressions
+                    objectLayer.offsetHeight;
+                    // Swap image immediately
+                    objectLayer.style.backgroundImage = `url(${preload.src})`;
+                    // Restore quick transition and bring back to full
+                    objectLayer.style.transition = 'opacity 0.18s ease';
+                    objectLayer.style.opacity = '1';
+                    // Restore previous transition after
+                    setTimeout(() => {
+                        objectLayer.style.transition = prevTransition || '';
+                    }, 220);
+                    return;
+                }
+                // Create a temporary overlay layer to fade in (insert next to base layer)
+                const tempLayer = document.createElement('div');
+                tempLayer.className = 'object-layer temp-layer';
+                tempLayer.setAttribute('data-zone', zoneId);
+                tempLayer.style.backgroundImage = `url(${preload.src})`;
+                tempLayer.style.opacity = '0';
+                tempLayer.style.display = 'block';
+                tempLayer.style.willChange = 'opacity';
+ 
+                // Insert directly after the zone's base layer to preserve stacking order
+                objectLayer.insertAdjacentElement('afterend', tempLayer);
+ 
+                // Ensure base layer is visible beneath
                 objectLayer.style.display = 'block';
                 objectLayer.style.opacity = '1';
-                
-                
-                // Test if image loads
-                const testImg = new Image();
-                testImg.onload = () => {
-                    
+ 
+                // Trigger fade-in
+                // Force reflow to ensure the transition applies
+                // eslint-disable-next-line no-unused-expressions
+                tempLayer.offsetHeight;
+                tempLayer.style.opacity = '1';
+ 
+                // After transition completes, set base to new image and remove temp
+                setTimeout(() => {
+                    objectLayer.style.backgroundImage = `url(${preload.src})`;
+                    // Clean up the temporary layer
+                    if (tempLayer && tempLayer.parentNode) {
+                        tempLayer.parentNode.removeChild(tempLayer);
+                    }
+                }, 350);
+            };
+            preload.onerror = () => {
+                // Retry with JPG fallback
+                const fallback = new Image();
+                fallback.onload = () => {
+                    if (zoneId === 'chandelier') {
+                        // Instant swap with slight dip (JPG fallback)
+                        const prevTransition = objectLayer.style.transition;
+                        objectLayer.style.display = 'block';
+                        objectLayer.style.transition = 'none';
+                        objectLayer.style.opacity = '0.85';
+                        objectLayer.offsetHeight;
+                        objectLayer.style.backgroundImage = `url(${fallback.src})`;
+                        objectLayer.style.transition = 'opacity 0.18s ease';
+                        objectLayer.style.opacity = '1';
+                        setTimeout(() => {
+                            objectLayer.style.transition = prevTransition || '';
+                        }, 220);
+                        return;
+                    }
+                    const tempLayer = document.createElement('div');
+                    tempLayer.className = 'object-layer temp-layer';
+                    tempLayer.setAttribute('data-zone', zoneId);
+                    tempLayer.style.backgroundImage = `url(${fallback.src})`;
+                    tempLayer.style.opacity = '0';
+                    tempLayer.style.display = 'block';
+                    tempLayer.style.willChange = 'opacity';
+                    objectLayer.insertAdjacentElement('afterend', tempLayer);
+                    objectLayer.style.display = 'block';
+                    objectLayer.style.opacity = '1';
+                    // Force reflow then fade in
+                    tempLayer.offsetHeight;
+                    tempLayer.style.opacity = '1';
+                    setTimeout(() => {
+                        objectLayer.style.backgroundImage = `url(${fallback.src})`;
+                        if (tempLayer && tempLayer.parentNode) {
+                            tempLayer.parentNode.removeChild(tempLayer);
+                        }
+                    }, 350);
                 };
-                testImg.onerror = () => {
-                    console.error(`❌ Failed to load PNG: ${imagePath}`);
-                    const fallbackPath = imagePath.replace('.png?v=', '.jpg?v=');
-                    objectLayer.style.backgroundImage = `url(${fallbackPath})`;
+                fallback.onerror = () => {
+                    console.error(`❌ Failed to load both PNG and JPG for ${zoneId} variant ${variantNumber}`);
                 };
-                testImg.src = imagePath;
-            } else {
-                console.error(`❌ Object layer not found for ${zoneId}`);
-            }
+                fallback.src = imagePathJpg;
+            };
+            // Start by trying PNG
+            preload.src = imagePathPng;
         }
         
         function closeCatalog() {
