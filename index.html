@@ -24,6 +24,7 @@
         height: 100vh;
         position: relative;
         transform: none;
+        background-image: url('assets/bg/cabin_base.jpg'); /* Set the base image here */
         background-size: 100% 100%; /* This will stretch the image */
         background-position: center;
         background-repeat: no-repeat;
@@ -578,9 +579,20 @@
                         {"item": "items/floor/item/5", "view": "items/floor/view/5", "name": "Pine Wood"},
                         {"item": "items/floor/item/6", "view": "items/floor/view/6", "name": "Ceramic"}
                     ]
+                },
+                "walls": {
+                    "dot": {"x": 120, "y": 250},
+                    "variants": [
+                        {"item": "items/walls/1", "view": "items/walls/1", "name": "Oak Panels"},
+                        {"item": "items/walls/2", "view": "items/walls/2", "name": "Floating White"},
+                        {"item": "items/walls/3", "view": "items/walls/3", "name": "Industrial Pipe"},
+                        {"item": "items/walls/4", "view": "items/walls/4", "name": "Minimalist Black"},
+                        {"item": "items/walls/5", "view": "items/walls/5", "name": "Rustic Wood"},
+                        {"item": "items/walls/6", "view": "items/walls/6", "name": "Glass & Steel"}
+                    ]
                 }
             },
-            "zones": ["windows", "chandelier", "bed_frame", "bed_sheets", "floor"],
+            "zones": ["windows", "chandelier", "bed_frame", "bed_sheets", "floor", "walls"],
             "variant": "default",
             "tutorial": {
                 "text": "Help us decorate the dream cabin!",
@@ -661,6 +673,16 @@
         let isTutorialActive = true;
         let tutorialInterval = null;
         let isMobileDevice = false;
+
+        // A more structured and flexible way to define game objects
+        const gameData = {
+            'windows': { name: 'Windows', itemCount: 6, thumbPath: (i) => `assets/thumbs/windows/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/windows/view/${i}.png?v=${new Date().getTime()}` },
+            'chandelier': { name: 'Chandelier', itemCount: 6, thumbPath: (i) => `assets/thumbs/chandelier/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/chandelier/view/${i}.png?v=${new Date().getTime()}` },
+            'bed_frame': { name: 'Bed Frame', itemCount: 6, thumbPath: (i) => `assets/thumbs/bed_frame/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/bed_frame/view/${i}.png?v=${new Date().getTime()}` },
+            'bed_sheets': { name: 'Bed Sheets', itemCount: 6, thumbPath: (i) => `assets/thumbs/bed_sheets/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/bed_sheets/view/${i}.png?v=${new Date().getTime()}` },
+            'floor': { name: 'Floor', itemCount: 6, thumbPath: (i) => `assets/thumbs/floor/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/floor/view/${i}.png?v=${new Date().getTime()}` },
+            'walls': { name: 'Walls', itemCount: 6, thumbPath: (i) => `assets/items/walls/${i}.jpg?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/walls/${i}.jpg?v=${new Date().getTime()}` },
+        };
         
         // Function to detect if the user is on a mobile device
         function detectMobileDevice() {
@@ -719,12 +741,15 @@
                 objectLayer.id = `layer-${zoneId}`;
                 objectLayer.style.display = 'none'; // Initially hidden
                 
+                // Special blend mode for walls
+                if (zoneId === 'walls') {
+                    objectLayer.style.mixBlendMode = 'darken';
+                }
+
                 objectLayersContainer.appendChild(objectLayer);
             });
             
-            // Set cabin background
-            document.getElementById('gameContainer').style.backgroundImage = 'url(assets/bg/cabin_base.jpg)';
-            
+            // Set cabin background -- REMOVED FROM HERE
         }
         
         function openCatalog(zoneId) {
@@ -747,11 +772,17 @@
             catalogTitle.textContent = `Choose ${zoneId.replace('_', ' ').toUpperCase()}`;
             catalogGrid.innerHTML = '';
             
-            zoneConfig.variants.forEach((variant, index) => {
+            const objectData = gameData[zoneId];
+            if (!objectData) {
+                console.error(`No game data found for zone: ${zoneId}`);
+                return;
+            }
+
+            for (let i = 1; i <= objectData.itemCount; i++) {
+                const variant = zoneConfig.variants[i-1] || { name: `${objectData.name} #${i}`};
                 const item = document.createElement('div');
                 item.className = 'catalog-item';
-                item.onmouseenter = () => previewVariant(index);
-                // Remove mouseleave revert to keep last preview active until another hover or confirm
+                item.onmouseenter = () => previewVariant(i); // Use index + 1
                 
                 // Direct event handler for first click to remove intro
                 item.addEventListener('click', function() {
@@ -762,11 +793,11 @@
                     }
                     
                     // Then handle the normal variant confirmation
-                    confirmVariant(index);
+                    confirmVariant(i); // Use index + 1
                 }, {once: true}); // This ensures the handler runs only once
                 
                 const img = document.createElement('img');
-                img.src = `assets/thumbs/${zoneId}/${index + 1}.png?v=${Date.now()}`;
+                img.src = objectData.thumbPath(i);
                 img.alt = variant.name;
                 img.onerror = () => {
                     // Fallback to placeholder
@@ -780,7 +811,7 @@
                 item.appendChild(img);
                 item.appendChild(name);
                 catalogGrid.appendChild(item);
-            });
+            }
             
             catalog.classList.add('visible'); // Slide in
             
@@ -799,11 +830,11 @@
             
             // Highlight in catalog
             document.querySelectorAll('.catalog-item').forEach((item, index) => {
-                item.classList.toggle('selected', index === variantIndex);
+                item.classList.toggle('selected', index === variantIndex - 1);
             });
             
             // Preview in scene
-            replaceObject(zoneId, variantIndex + 1);
+            replaceObject(zoneId, variantIndex);
         }
 
         function revertPreview() {
@@ -846,7 +877,7 @@
             
             // Highlight the final choice briefly
             document.querySelectorAll('.catalog-item').forEach((item, index) => {
-                item.classList.toggle('selected', index === variantIndex);
+                item.classList.toggle('selected', index === variantIndex - 1);
             });
 
             // Trigger achievement effect
@@ -893,7 +924,7 @@
             gameState.confirmedZones[zoneId] = variantIndex;
             
             // Update the actual object in the scene
-            replaceObject(zoneId, variantIndex + 1); // +1 because files are numbered from 1
+            replaceObject(zoneId, variantIndex); // Use the variantIndex directly
             
             // Update hotspot appearance
             const hotspot = document.getElementById(`hotspot-${zoneId}`);
@@ -923,13 +954,18 @@
                 return;
             }
 
+            const objectData = gameData[zoneId];
+            if (!objectData) {
+                console.error(`No game data found for zone: ${zoneId}`);
+                return;
+            }
+
             // Remove any previous temporary transition layers for this zone
             document.querySelectorAll(`.object-layer.temp-layer[data-zone="${zoneId}"]`).forEach(el => {
                 if (el && el.parentNode) el.parentNode.removeChild(el);
             });
 
-            const imagePathPng = `assets/items/${zoneId}/view/${variantNumber}.png?v=${Date.now()}`;
-            const imagePathJpg = imagePathPng.replace('.png?v=', '.jpg?v=');
+            const imagePath = objectData.viewPath(variantNumber);
 
             // Preload target image to avoid flicker during transition
             const preload = new Image();
@@ -987,51 +1023,10 @@
                 }, 350);
             };
             preload.onerror = () => {
-                // Retry with JPG fallback
-                const fallback = new Image();
-                fallback.onload = () => {
-                    if (zoneId === 'chandelier') {
-                        // Instant swap with slight dip (JPG fallback)
-                        const prevTransition = objectLayer.style.transition;
-                        objectLayer.style.display = 'block';
-                        objectLayer.style.transition = 'none';
-                        objectLayer.style.opacity = '0.85';
-                        objectLayer.offsetHeight;
-                        objectLayer.style.backgroundImage = `url(${fallback.src})`;
-                        objectLayer.style.transition = 'opacity 0.18s ease';
-                        objectLayer.style.opacity = '1';
-                        setTimeout(() => {
-                            objectLayer.style.transition = prevTransition || '';
-                        }, 220);
-                        return;
-                    }
-                    const tempLayer = document.createElement('div');
-                    tempLayer.className = 'object-layer temp-layer';
-                    tempLayer.setAttribute('data-zone', zoneId);
-                    tempLayer.style.backgroundImage = `url(${fallback.src})`;
-                    tempLayer.style.opacity = '0';
-                    tempLayer.style.display = 'block';
-                    tempLayer.style.willChange = 'opacity';
-                    objectLayer.insertAdjacentElement('afterend', tempLayer);
-                    objectLayer.style.display = 'block';
-                    objectLayer.style.opacity = '1';
-                    // Force reflow then fade in
-                    tempLayer.offsetHeight;
-                    tempLayer.style.opacity = '1';
-                    setTimeout(() => {
-                        objectLayer.style.backgroundImage = `url(${fallback.src})`;
-                        if (tempLayer && tempLayer.parentNode) {
-                            tempLayer.parentNode.removeChild(tempLayer);
-                        }
-                    }, 350);
-                };
-                fallback.onerror = () => {
-                    console.error(`❌ Failed to load both PNG and JPG for ${zoneId} variant ${variantNumber}`);
-                };
-                fallback.src = imagePathJpg;
+                console.error(`❌ Failed to load image for ${zoneId} variant ${variantNumber} at path ${imagePath}`);
             };
-            // Start by trying PNG
-            preload.src = imagePathPng;
+            // Start loading the image
+            preload.src = imagePath;
         }
         
         function closeCatalog() {
