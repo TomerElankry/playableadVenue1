@@ -17,11 +17,16 @@
         height: 100%;
         position: fixed;
         font-family: Arial, sans-serif;
+        display: flex;               /* Center the game area */
+        align-items: center;
+        justify-content: center;
     }
     
     #gameContainer {
-        width: 100vw; /* Use viewport units to fill screen */
-        height: 100vh;
+        /* Make the playable narrower like a mobile viewport */
+        width: min(420px, 100vw);
+        aspect-ratio: 720 / 1280;    /* Maintain portrait aspect */
+        height: auto;                 /* Let height derive from aspect ratio */
         position: relative;
         transform: none;
         background-image: url('assets/bg/cabin_base.jpg'); /* Set the base image here */
