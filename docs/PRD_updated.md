@@ -6,9 +6,9 @@ This document outlines the product requirements for a responsive HTML5 playable 
 
 ## 2. Project Goals
 
-*   **Primary Goal:** Increase app installs by providing a compelling and interactive preview of the game.
-*   **Secondary Goal:** Boost user engagement by demonstrating the game's creative and customization features.
-*   **Technical Goal:** Deliver a lightweight, fast-loading, and highly responsive ad that performs seamlessly across all mobile devices and webviews.
+* **Primary Goal:** Increase app installs by providing a compelling and interactive preview of the game.
+* **Secondary Goal:** Boost user engagement by demonstrating the game's creative and customization features.
+* **Technical Goal:** Deliver a lightweight, fast-loading, and highly responsive ad that performs seamlessly across all mobile devices and webviews.
 
 ## 3. Target Audience
 
@@ -20,59 +20,59 @@ The target audience is players of casual, simulation, and interior design mobile
 The ad features a high-quality, static image of a mountain cabin interior which serves as the main canvas for the user's interactions.
 
 ### 4.2. Interactive Hotspots
-There are five distinct interactive zones in the cabin, each marked by an animated, pulsing dot to draw user attention.
-*   **Chandelier:** Allows customization of the main lighting fixture.
-*   **Windows:** Allows customization of the window frames/style.
-*   **Bed Frame:** Allows customization of the bed's frame.
-*   **Bed Sheets:** Allows customization of the bedding/sheets.
-*   **Floor:** Allows customization of the flooring material.
+There are six interactive zones in the cabin, each marked by a circular hotspot to draw user attention.
+* **Windows**
+* **Chandelier**
+* **Bed Frame**
+* **Bed Sheets**
+* **Floor**
+* **Walls**
 
 ### 4.3. Object Customization
-*   Clicking on a hotspot opens a simple, scrollable catalog.
-*   Each catalog contains **nine unique design variants** for the corresponding object.
-*   Selecting a variant from the catalog instantly updates the main cabin scene to display the new design.
+* Clicking a hotspot opens a scrollable right-side catalog with variants and names.
+* Each catalog contains up to six design variants for the corresponding object.
+* Selecting a variant previews it; confirming applies it to the scene.
 
-### 4.4. Call to Action (CTA)
-*   A "Download" button is present to direct users to the appropriate app store.
-*   The CTA links to both the Google Play Store and the Apple App Store.
+### 4.4. Completion & CTA
+* When all six zones are confirmed, show a final overlay with a congratulatory message, five animated white stars, and a CTA button.
+* The CTA navigates in the same tab to a configurable store URL.
 
-### 4.6. Tutorial Hand Guidance
-*   At the beginning of the ad, the **Windows catalog** opens automatically on the left side.
-*   A **hand indicator** animates across the different window options, starting from the first option and moving sequentially.
-*   While pointing:
-    *   The **option bubble** turns green.
-    *   The corresponding window object is applied in the scene.
-*   The hand remains for 1.5 seconds on each option before moving to the next.
-*   The tutorial ends immediately upon user interaction (mouse movement on desktop or touch on mobile).
-*   The actual gameplay flow starts once the user clicks/taps on a window option.
-
-### 4.5. Intro Screen
-*   The ad begins with an introductory overlay or message (e.g., "Help us decorate the cabin!") to provide context and prompt the user to start.
+### 4.5. Tutorial
+* On load, the Windows catalog auto-opens and a hand guides attention across items until the user interacts (mouse/touch).
+* The tutorial ends immediately on interaction; normal flow continues.
 
 ## 5. Design & UX Requirements
 
 ### 5.1. Layout & Responsiveness
-*   The ad is designed for a **base portrait resolution of 720x1280**.
-*   The ad must be **fully responsive**, scaling to fill the entire browser or webview window on any device.
-*   A **"cover" scaling method** (`Math.max`) is used to ensure the ad fills the screen without letterboxing, even if minor cropping of the background occurs on different aspect ratios.
-*   The layout must adapt to both portrait and landscape orientations, disabling page scroll.
+* Designed for portrait 720×1280; scales responsively to fill the viewport.
+
+### 5.2. Visual Hierarchy & Layering
+* Layer order (back → front): Walls (0), Floor (2), Bed Sheets (3), Bed Frame (4), Windows (5), Chandelier (6), Hotspots (10).
+* Hotspots always remain clickable above layers.
+
+### 5.3. Transitions
+* Windows: fade 0.5 → 1.0 opacity.
+* Bed Sheets: fade 0.3 → 1.0 opacity.
+* Floor: fade 0.4 → 1.0 opacity.
+* Chandelier: direct fade 0 → 1 without overlay.
+* Walls/Bed Frame: smooth overlay cross-fade.
+* Global timing: ~0.4s ease-in-out; images are preloaded for smoothness.
+
+### 5.4. Feedback & Effects
+* On confirm, an achievement effect spawns three jumping white stars with a subtle glow near the hotspot.
 
 ## 6. Technical Specifications
 
 ### 6.1. Platform
-*   **Technology:** Built with vanilla HTML5, CSS3, and JavaScript.
-*   **Dependencies:** No external libraries or frameworks are used to minimize bundle size and load times.
+* **Technology:** Vanilla HTML, CSS, JavaScript.
+* **Dependencies:** None (no third-party frameworks/libraries).
 
-### 6.2. File Structure
-*   The entire ad (HTML, CSS, JS) is self-contained within a single `index.html` file for simplicity and portability.
-*   Image assets for object variants are loaded dynamically as needed.
+### 6.2. Assets
+* Walls use transparent PNGs (resized and optimized ~120–170KB each) to composite correctly over the scene.
+* Thumbnails and view images are loaded on demand with cache-busting querystrings.
 
-### 6.3. Performance
-*   **Bundle Size:** The initial download size must be minimal to meet the strict requirements of ad networks.
-*   **Load Time:** The ad must load quickly to prevent user drop-off.
-
-### 6.4. Configuration & Debugging
-*   A centralized `CONFIG` object in the JavaScript holds all critical settings, including hotspot coordinates, store URLs, and feature flags.
-*   A **debug mode** (`showDebugInfo: true`) can be enabled to display an on-screen HUD with mouse coordinates, facilitating the precise positioning of hotspots.
+### 6.3. Configuration & Debugging
+* All settings live under a `CONFIG` object (zones, coordinates, tutorial, URLs).
+* Optional debug HUD shows mouse and container metrics.
 
 ---

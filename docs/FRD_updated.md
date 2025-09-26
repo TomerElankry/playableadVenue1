@@ -10,34 +10,47 @@ The system is a self-contained, interactive HTML5 playable ad designed to run in
 
 ## 3. Functional Requirements
 
-| ID      | Requirement                                                                                                                              | Details                                                                                                                                                                                            |
+| ID | Requirement | Details |
 | :------ | :--------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **FR-001** | **Ad Initialization & Intro Screen**                                                                                                        | The ad shall load and display an initial introductory screen. This screen must contain a "Start" button to begin the experience.                                                                      |
-| **FR-002** | **Start Interaction**                                                                                                                    | Upon user interaction with the "Start" button, the intro screen shall be hidden, and the main interactive cabin scene shall become visible and active.                                                 |
-| **FR-003** | **Display of Interactive Hotspots**                                                                                                      | The system shall display five distinct, interactive hotspots on the cabin scene at predefined coordinates. Each hotspot corresponds to a customizable object: Chandelier, Windows, Bed Frame, Bed Sheets, Floor. |
-| **FR-004** | **Hotspot Interactivity**                                                                                                                | Each hotspot must be clickable. When a user clicks a hotspot, the system shall open a catalog UI corresponding to that object.                                                                         |
-| **FR-005** | **Display Customization Catalog**                                                                                                        | The catalog UI must display nine unique design variants for the selected object. The variants shall be presented as selectable thumbnails.                                                             |
-| **FR-006** | **Variant Selection & Scene Update**                                                                                                     | When a user selects a variant from the catalog, the system shall instantly update the main cabin scene to render the chosen design for the corresponding object. The catalog must remain open for further selections. |
-| **FR-007** | **Call-to-Action (CTA)**                                                                                                                 | The system shall display a "Download" button. Upon clicking this button, the user shall be redirected to a specified App Store or Google Play Store URL.                                                  |
-| **FR-009** | **Tutorial Hand Guidance**                                                                                                      | On initialization, the Windows catalog opens. A guiding hand animates through each option, highlighting the option bubble in green and applying the corresponding design. The hand moves every 1.5 seconds to the next option. The tutorial ends when the user interacts (mouse movement or tap), and the game proceeds once the user selects an option. |
-| **FR-008** | **Debug Mode Functionality**                                                                                                             | When debug mode is enabled (`showDebugInfo: true`), the system shall display an on-screen HUD showing the real-time X/Y coordinates of the mouse pointer to assist with positioning.                      |
+| **FR-001** | **Ad Initialization & Intro Message** | The ad loads directly into the interactive cabin scene with an introductory character bubble. No separate start button is required. |
+| **FR-002** | **Auto Tutorial** | On load, the Windows catalog auto-opens and a guiding hand highlights items until the user interacts. Tutorial ends immediately on first user interaction. |
+| **FR-003** | **Display of Interactive Hotspots** | The system displays six hotspots for: Windows, Chandelier, Bed Frame, Bed Sheets, Floor, and Walls. |
+| **FR-004** | **Hotspot Interactivity** | Clicking a hotspot opens the relevant catalog. Hotspots remain clickable above all scene layers (high z-index). |
+| **FR-005** | **Display Customization Catalog** | Each catalog shows up to six variants (per current assets) with name and thumbnail. |
+| **FR-006** | **Variant Selection & Scene Update** | Selecting a variant previews it; confirming applies it. Objects transition smoothly per zone (see UI/Transitions). |
+| **FR-007** | **Completion Logic** | When all six zones are confirmed at least once, show the final screen with stars and CTA. |
+| **FR-008** | **Call-to-Action (CTA)** | Final screen "Click here!" button redirects to configured store URL in same tab. |
+| **FR-009** | **Tutorial Hand Guidance** | The hand animates across catalog items (Windows) until user interaction; items are temporarily highlighted during guidance. |
+| **FR-010** | **Debug Mode Functionality** | When debug mode is enabled (`showDebugInfo: true`), an on-screen HUD shows mouse/container coordinates. |
 
 ## 4. User Interface (UI) Requirements
 
-| ID      | Requirement               | Details                                                                                                    |
+| ID | Requirement | Details |
 | :------ | :------------------------ | :--------------------------------------------------------------------------------------------------------- |
-| **UI-001** | **Main Scene View**       | The ad shall render a high-quality, static background image of a mountain cabin interior.                  |
-| **UI-002** | **Hotspot Visuals**       | Hotspots shall be rendered as animated, pulsing circular dots to clearly indicate they are interactive elements. |
-| **UI-003** | **Catalog UI**            | The catalog shall be presented as a non-intrusive, scrollable overlay panel.                               |
-| **UI-004** | **Variant Thumbnails**    | Each item in the catalog shall be represented by a clear thumbnail image previewing the design variant.    |
+| **UI-001** | **Main Scene View** | The ad renders a high-quality background image of a cabin interior. |
+| **UI-002** | **Hotspot Visuals** | Hotspots are circular buttons with a plus sign; they sit above all object layers (`z-index: 10`). |
+| **UI-003** | **Catalog UI** | Right-side, scrollable overlay with item image and name. Selected item shows a highlighted state. |
+| **UI-004** | **Variant Thumbnails** | Thumbnails are optimized PNGs/JPGs. Walls use transparent PNGs for correct compositing. |
+| **UI-005** | **Final Screen** | An overlay displays "Congratulations!" with five white stars and a CTA button. |
 
-## 5. Non-Functional Requirements
+## 5. Transitions & Layering
 
-| ID       | Requirement         | Details                                                                                                                                                                      |
+- **Layer Order (back → front):** Walls (0), Floor (2), Bed Sheets (3), Bed Frame (4), Windows (5), Chandelier (6), Hotspots (10).
+- **Transitions by Zone:**
+  - Windows: fade from 0.5 → 1 opacity.
+  - Bed Sheets: fade from 0.3 → 1 opacity.
+  - Floor: fade from 0.4 → 1 opacity.
+  - Chandelier: direct fade-in (0 → 1) without overlay.
+  - Walls/Bed Frame: smooth overlay cross-fade.
+- **Achievement Effect:** On confirm, three jumping white stars (with glow) appear near the hotspot.
+
+## 6. Non-Functional Requirements
+
+| ID | Requirement | Details |
 | :------- | :------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **NFR-001** | **Responsiveness**    | The ad's layout must be fully responsive, scaling via a CSS `transform` to fill the available screen space while maintaining its 720x1280 aspect ratio using "cover" logic. |
-| **NFR-002** | **Performance**       | The ad must be highly performant, with a minimal initial load size and instantaneous feedback for all user interactions (e.g., variant selection).                            |
-| **NFR-003** | **Compatibility**     | The ad must render and function correctly across all modern mobile and desktop browsers, including Chrome, Safari, and Firefox.                                             |
-| **NFR-004** | **Portability**       | The ad must be delivered as a single, self-contained `index.html` file with no external dependencies (JS libraries, CSS frameworks, etc.).                                     |
+| **NFR-001** | **Responsiveness** | The ad scales to fill the viewport while maintaining aspect via CSS and percentage positioning. |
+| **NFR-002** | **Performance** | Assets are optimized; new wall images are resized transparent PNGs (approx. 120–170KB each). Preloading prevents flicker. |
+| **NFR-003** | **Compatibility** | Works across modern mobile/desktop browsers and in-app webviews. |
+| **NFR-004** | **Portability** | Delivered as a single `index.html` plus `assets/` folder; no external JS/CSS deps. |
 
 ---
