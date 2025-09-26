@@ -44,8 +44,16 @@
         background-repeat: no-repeat;
         pointer-events: none;
         opacity: 1;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.4s ease-in-out;
     }
+    
+    /* Set proper z-index for layering order */
+    #layer-walls { z-index: 0; }
+    #layer-floor { z-index: 2; }
+    #layer-bed_sheets { z-index: 3; }
+    #layer-bed_frame { z-index: 4; }
+    #layer-windows { z-index: 5; }
+    #layer-chandelier { z-index: 6; }
     
     #layer-bed_frame {
         background-size: 100% 100% !important;
@@ -72,6 +80,7 @@
         font-size: 40px; /* Size of the plus sign */
         color: white; /* Color of the plus sign */
         font-weight: bold; /* Make the plus sign thicker */
+        z-index: 10; /* Ensure hotspots are always on top */
     }
     
     .hotspot:hover {
@@ -238,10 +247,11 @@
     
     .star {
         font-size: 48px;
-        color: #ffd700;
+        color: #FFFFFF;
         animation: starPop 0.5s ease forwards;
         opacity: 0;
         transform: scale(0);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
     }
     
     @keyframes starPop {
@@ -413,10 +423,10 @@
 
     @keyframes hand-float {
         0% {
-            transform: translateY(0);
+            transform: translateY(0) rotate(90deg);
         }
         100% {
-            transform: translateY(-5px);
+            transform: translateY(-5px) rotate(90deg);
         }
     }
 
@@ -434,10 +444,11 @@
 
     .star-effect {
         position: absolute;
-        font-size: 30px;
-        color: #FFD700;
+        font-size: 50px;
+        color: #FFFFFF;
         opacity: 0;
         animation: jump-and-fade 1s ease-out forwards;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
     }
 
     @keyframes jump-and-fade {
@@ -583,12 +594,12 @@
                 "walls": {
                     "dot": {"x": 120, "y": 250},
                     "variants": [
-                        {"item": "items/walls/1", "view": "items/walls/1", "name": "Oak Panels"},
-                        {"item": "items/walls/2", "view": "items/walls/2", "name": "Floating White"},
-                        {"item": "items/walls/3", "view": "items/walls/3", "name": "Industrial Pipe"},
-                        {"item": "items/walls/4", "view": "items/walls/4", "name": "Minimalist Black"},
-                        {"item": "items/walls/5", "view": "items/walls/5", "name": "Rustic Wood"},
-                        {"item": "items/walls/6", "view": "items/walls/6", "name": "Glass & Steel"}
+                        {"item": "items/walls/wall1-optimized", "view": "items/walls/wall1-optimized", "name": "Oak Panels"},
+                        {"item": "items/walls/wall2-optimized", "view": "items/walls/wall2-optimized", "name": "Floating White"},
+                        {"item": "items/walls/wall3-optimized", "view": "items/walls/wall3-optimized", "name": "Industrial Pipe"},
+                        {"item": "items/walls/wall4-optimized", "view": "items/walls/wall4-optimized", "name": "Minimalist Black"},
+                        {"item": "items/walls/wall5-optimized", "view": "items/walls/wall5-optimized", "name": "Rustic Wood"},
+                        {"item": "items/walls/wall6-optimized", "view": "items/walls/wall6-optimized", "name": "Glass & Steel"}
                     ]
                 }
             },
@@ -638,7 +649,7 @@
             <h2 id="catalogTitle" class="catalog-title">Choose Your Style</h2>
             <div id="catalogGrid" class="catalog-grid"></div>
             <!-- Add tutorial hand inside the catalog -->
-            <img src="assets/ui/FloatingHand.png" id="tutorialHand" class="tutorial-hand" alt="Guiding hand">
+            <img src="assets/others/hovering hand.png" id="tutorialHand" class="tutorial-hand" alt="Guiding hand">
         </div>
         
         <!-- Debug HUD -->
@@ -653,11 +664,11 @@
             <div class="final-title">Congratulations!</div>
             <div class="final-subtitle">Your cabin is complete!</div>
             <div class="stars">
-                <span class="star">⭐</span>
-                <span class="star">⭐</span>
-                <span class="star">⭐</span>
-                <span class="star">⭐</span>
-                <span class="star">⭐</span>
+                <span class="star">★</span>
+                <span class="star">★</span>
+                <span class="star">★</span>
+                <span class="star">★</span>
+                <span class="star">★</span>
             </div>
             <button class="btn btn-primary" onclick="downloadGame()">Click here!</button>
         </div>
@@ -681,7 +692,7 @@
             'bed_frame': { name: 'Bed Frame', itemCount: 6, thumbPath: (i) => `assets/thumbs/bed_frame/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/bed_frame/view/${i}.png?v=${new Date().getTime()}` },
             'bed_sheets': { name: 'Bed Sheets', itemCount: 6, thumbPath: (i) => `assets/thumbs/bed_sheets/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/bed_sheets/view/${i}.png?v=${new Date().getTime()}` },
             'floor': { name: 'Floor', itemCount: 6, thumbPath: (i) => `assets/thumbs/floor/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/floor/view/${i}.png?v=${new Date().getTime()}` },
-            'walls': { name: 'Walls', itemCount: 6, thumbPath: (i) => `assets/items/walls/${i}.jpg?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/walls/${i}.jpg?v=${new Date().getTime()}` },
+            'walls': { name: 'Walls', itemCount: 6, thumbPath: (i) => `assets/items/walls/wall${i}-optimized.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/walls/wall${i}-optimized.png?v=${new Date().getTime()}` },
         };
         
         // Function to detect if the user is on a mobile device
@@ -741,11 +752,6 @@
                 objectLayer.id = `layer-${zoneId}`;
                 objectLayer.style.display = 'none'; // Initially hidden
                 
-                // Special blend mode for walls
-                if (zoneId === 'walls') {
-                    objectLayer.style.mixBlendMode = 'darken';
-                }
-
                 objectLayersContainer.appendChild(objectLayer);
             });
             
@@ -899,7 +905,7 @@
             for (let i = 0; i < 3; i++) { // Create 3 stars
                 const star = document.createElement('div');
                 star.className = 'star-effect';
-                star.textContent = '⭐';
+                star.textContent = '★';
                 
                 // Randomize horizontal position and animation delay
                 star.style.left = `${Math.random() * 80 - 40}px`;
@@ -936,7 +942,12 @@
             const totalZones = CONFIG.application.zones.length;
             const confirmedCount = Object.keys(gameState.confirmedZones).length;
             
+            console.log(`Zones confirmed: ${confirmedCount}/${totalZones}`);
+            console.log('Confirmed zones:', gameState.confirmedZones);
+            console.log('All zones:', CONFIG.application.zones);
+            
             if (confirmedCount === totalZones) {
+                console.log('All zones confirmed! Showing final screen...');
                 setTimeout(showFinalScreen, 1000);
             }
             
@@ -971,26 +982,58 @@
             const preload = new Image();
             preload.onload = () => {
                 if (zoneId === 'chandelier') {
-                    // Instant swap with slight dip to avoid overlap and avoid blank
-                    const prevTransition = objectLayer.style.transition;
+                    // Chandelier gets a subtle fade-in without overlay for more natural appearance
                     objectLayer.style.display = 'block';
-                    // Disable transitions to set dip instantly
-                    objectLayer.style.transition = 'none';
-                    objectLayer.style.opacity = '0.85';
-                    // Force reflow
+                    objectLayer.style.opacity = '0';
+                    objectLayer.style.backgroundImage = `url(${preload.src})`;
+                    
+                    // Force reflow then fade in
                     // eslint-disable-next-line no-unused-expressions
                     objectLayer.offsetHeight;
-                    // Swap image immediately
-                    objectLayer.style.backgroundImage = `url(${preload.src})`;
-                    // Restore quick transition and bring back to full
-                    objectLayer.style.transition = 'opacity 0.18s ease';
                     objectLayer.style.opacity = '1';
-                    // Restore previous transition after
-                    setTimeout(() => {
-                        objectLayer.style.transition = prevTransition || '';
-                    }, 220);
                     return;
                 }
+                
+                if (zoneId === 'windows') {
+                    // Windows get a smooth cross-fade transition
+                    objectLayer.style.display = 'block';
+                    objectLayer.style.opacity = '0.5'; // Slight fade
+                    objectLayer.style.backgroundImage = `url(${preload.src})`;
+                    
+                    // Force reflow then fade to full opacity
+                    // eslint-disable-next-line no-unused-expressions
+                    objectLayer.offsetHeight;
+                    objectLayer.style.opacity = '1';
+                    return;
+                }
+                
+                if (zoneId === 'bed_sheets') {
+                    // Bed sheets get a gentle fade transition for fabric-like appearance
+                    objectLayer.style.display = 'block';
+                    objectLayer.style.opacity = '0.3'; // Start more transparent
+                    objectLayer.style.backgroundImage = `url(${preload.src})`;
+                    
+                    // Force reflow then fade to full opacity
+                    // eslint-disable-next-line no-unused-expressions
+                    objectLayer.offsetHeight;
+                    objectLayer.style.opacity = '1';
+                    return;
+                }
+                
+                if (zoneId === 'floor') {
+                    // Floor gets a solid, stable transition
+                    objectLayer.style.display = 'block';
+                    objectLayer.style.opacity = '0.4'; // Moderate fade
+                    objectLayer.style.backgroundImage = `url(${preload.src})`;
+                    
+                    // Force reflow then fade to full opacity
+                    // eslint-disable-next-line no-unused-expressions
+                    objectLayer.offsetHeight;
+                    objectLayer.style.opacity = '1';
+                    return;
+                }
+                
+                // Other objects use the smooth overlay transition
                 // Create a temporary overlay layer to fade in (insert next to base layer)
                 const tempLayer = document.createElement('div');
                 tempLayer.className = 'object-layer temp-layer';
@@ -1020,7 +1063,7 @@
                     if (tempLayer && tempLayer.parentNode) {
                         tempLayer.parentNode.removeChild(tempLayer);
                     }
-                }, 350);
+                }, 400);
             };
             preload.onerror = () => {
                 console.error(`❌ Failed to load image for ${zoneId} variant ${variantNumber} at path ${imagePath}`);
@@ -1081,7 +1124,7 @@
                 hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 10}px`;
                 hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 10}px`;
 
-                previewVariant(currentIndex);
+                previewVariant(currentIndex + 1);
                 
                 currentIndex = (currentIndex + 1) % items.length;
             };
