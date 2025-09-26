@@ -17,23 +17,53 @@
         height: 100%;
         position: fixed;
         font-family: Arial, sans-serif;
-        display: flex;               /* Center the game area */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Top section - Logo strip */
+    .top-section {
+        height: 80px;
+        background: rgba(255, 192, 203, 0.9); /* Cozy pink background */
+        display: flex;
         align-items: center;
         justify-content: center;
+        z-index: 200;
+        width: min(420px, 100vw);
+        margin: 0 auto; /* Center horizontally */
+    }
+    
+    /* Middle section - Cabin */
+    .middle-section {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000000;
+        width: min(420px, 100vw);
+        margin: 0 auto; /* Center horizontally */
     }
     
     #gameContainer {
-        /* Make the playable narrower like a mobile viewport */
-        width: min(420px, 100vw);
-        aspect-ratio: 720 / 1280;    /* Maintain portrait aspect */
-        height: auto;                 /* Let height derive from aspect ratio */
+        width: 100%;
+        height: 100%;
         position: relative;
         transform: none;
-        background-image: url('assets/bg/cabin_base.jpg'); /* Set the base image here */
-        background-size: 100% 100%; /* This will stretch the image */
+        background-image: url('assets/bg/cabin_base.jpg');
+        background-size: 100% 100%;
         background-position: center;
         background-repeat: no-repeat;
         overflow: hidden;
+    }
+    
+    /* Bottom section - Intro/Catalog area */
+    .bottom-section {
+        height: 280px;
+        background: rgba(255, 192, 203, 0.9); /* Cozy pink background */
+        position: relative;
+        z-index: 100;
+        width: min(420px, 100vw);
+        margin: 0 auto; /* Center horizontally */
     }
 
     /* #gameStage is no longer needed */
@@ -70,8 +100,8 @@
     
     .hotspot {
         position: absolute;
-        width: 60px; /* Larger size */
-        height: 60px;
+        width: 40px; /* Smaller size */
+        height: 40px;
         background: rgba(128, 128, 128, 0.5); /* Semi-transparent grey */
         border: 2px solid #fff;
         border-radius: 50%;
@@ -82,7 +112,7 @@
         display: flex; /* Add flexbox for centering */
         align-items: center; /* Center vertically */
         justify-content: center; /* Center horizontally */
-        font-size: 40px; /* Size of the plus sign */
+        font-size: 24px; /* Smaller plus sign */
         color: white; /* Color of the plus sign */
         font-weight: bold; /* Make the plus sign thicker */
         z-index: 10; /* Ensure hotspots are always on top */
@@ -100,52 +130,56 @@
     }
     
     .catalog {
-        position: absolute; /* Changed from fixed */
+        position: absolute;
         top: 0;
-        right: -400px; /* Start off-screen */
-        width: 350px;
-        height: 100%;
-        background: rgba(245, 235, 224, 0.8); /* Cozy cream color, 80% opacity */
-        display: flex;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(380px, 90vw);
+        height: 100%; /* Fill the bottom section */
+        background: rgba(245, 235, 224, 0.9); /* Cozy cream color, 90% opacity */
+        display: none; /* Hidden by default */
         flex-direction: column;
         align-items: center;
         z-index: 1000;
-        transition: right 0.5s ease-in-out; /* Slide in/out animation */
-        padding: 20px;
+        padding: 12px 14px;
         box-sizing: border-box;
+        border-radius: 16px 16px 0 0; /* Rounded top corners */
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
     }
     
     .catalog.visible {
-        right: 0; /* Slide in */
+        display: flex; /* Show when visible */
     }
 
     .catalog-title {
-        font-size: 28px;
-        color: #4E443C;
-        font-family: 'Georgia', serif;
-        margin-bottom: 20px;
+        margin: 0 0 8px 0;
     }
     
     .catalog-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
         width: 100%;
-        overflow-y: auto; /* Allow scrolling if items overflow */
+        max-height: none; /* Show all items */
+        overflow: visible; /* No scrolling */
+        padding: 0;
     }
     
     .catalog-item {
         width: 100%;
         background: transparent;
         border: 2px solid transparent;
-        border-radius: 15px;
+        border-radius: 12px;
         cursor: pointer;
-        overflow: hidden;
+        overflow: visible; /* Allow text to be fully visible */
         transition: all 0.2s ease;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        padding: 10px;
+        padding: 8px 6px; /* Compact to fit 2 rows */
         box-sizing: border-box;
+        text-align: center;
+        min-height: 96px; /* Ensure minimum height for content */
     }
     
     .catalog-item:hover {
@@ -164,17 +198,19 @@
     }
     
     .catalog-item img {
-        width: 100px;
-        height: 80px;
+        width: 70px;
+        height: 54px;
         object-fit: cover;
-        border-radius: 10px;
+        border-radius: 8px;
+        margin-bottom: 4px;
     }
 
     .catalog-item-name {
-        margin-left: 15px;
-        font-size: 20px;
+        margin: 0;
+        font-size: 12px;
         color: #4E443C;
         font-family: 'Georgia', serif;
+        line-height: 1.2;
     }
     
     .catalog-buttons {
@@ -340,57 +376,57 @@
         left: 0;
         width: 100%;
         height: 100%;
-        pointer-events: none; /* Allow clicks to pass through to hotspots unless on a button */
+        pointer-events: auto; /* Allow clicks on the intro elements */
         z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .logo {
-        position: absolute;
-        top: 40px; /* Adjusted top position */
-        left: 50%; /* Center horizontally */
-        transform: translateX(-50%); /* Fine-tune horizontal centering */
-        width: 250px;
+        width: 200px;
         height: auto;
-        z-index: 200; /* Ensure it stays on top */
+        z-index: 200;
     }
 
     .play-button {
-        padding: 15px 60px;
-        background-color: #F5EBE0; /* Cozy cream color */
-        border-radius: 50px;
-        font-size: 32px;
-        color: #4E443C; /* Dark brown text */
+        padding: 10px 16px;
+        background-color: rgba(255, 192, 203, 0.9); /* Pink button */
+        border-radius: 20px;
+        font-size: 16px;
+        color: #FFFFFF; /* White text */
         cursor: pointer;
         pointer-events: auto;
         border: none;
-        box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         transition: all 0.2s ease;
-        margin-top: 20px; /* Add space above the button */
         font-family: 'Georgia', 'Times New Roman', serif; /* Match font */
+        font-weight: bold;
+        white-space: nowrap; /* Keep button on one line */
     }
     
     .play-button:hover {
-        background-color: #BFD8BD; /* Cozy sage green on hover */
+        background-color: rgba(255, 192, 203, 1); /* Darker pink on hover */
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     }
     
     .character-dialogue {
-        position: absolute;
-        top: 20px; /* Position at the top */
-        left: 20px; /* Position on the left */
+        position: relative;
         transform: none; /* Remove centering transform */
         display: flex;
         align-items: center;
         z-index: 110;
-        pointer-events: none;
+        pointer-events: auto;
         animation: none; /* Remove floating animation */
         transition: opacity 0.5s ease; /* Add transition for fade-out */
     }
 
     .character-portrait {
-        width: 120px; /* Slightly larger portrait */
-        height: 120px;
+        width: 72px; /* Smaller portrait */
+        height: 72px;
         border-radius: 50%;
-        border: 5px solid white;
+        border: 4px solid white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         background-image: url('assets/hilary stone/d0944a1d4ca40a130fb160064419b14af8476ddc89a7a29846453b9af4e5e9cd-removebg-preview.png');
         background-size: cover;
@@ -399,39 +435,44 @@
     
     .speech-bubble {
         position: relative;
-        background: rgba(245, 235, 224, 0.9); /* Warmer cream color with 90% opacity */
-        border-radius: 25px; /* Softer corners */
-        padding: 15px 20px; /* Smaller padding */
-        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-        width: 350px; /* Narrower bubble */
+        background: rgba(255, 255, 255, 0.95); /* White bubble with 95% opacity */
+        border-radius: 20px; /* Softer corners */
+        padding: 12px 16px; /* Compact padding */
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        width: 100%; /* Fill width of bottom section minus padding */
+        max-width: 360px;
         font-family: 'Georgia', 'Times New Roman', serif;
         cursor: default;
-        display: flex; /* Arrange content and photo side-by-side */
+        display: flex; /* Arrange content horizontally */
+        flex-direction: row;
         align-items: center;
-        justify-content: space-between;
-        gap: 15px;
+        gap: 10px;
+        text-align: left;
+        margin: 0 auto;
     }
 
     .tutorial-hand {
         position: absolute;
-        width: 100px;
+        width: 70px;
         height: auto;
         z-index: 9999;
         pointer-events: none;
-        transition: top 0.5s ease-in-out, left 0.5s ease-in-out, opacity 0.3s ease;
         transform-origin: center;
         opacity: 0;
         visibility: hidden;
         filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
-        animation: hand-float 1.5s infinite alternate ease-in-out;
+        top: 0;
+        left: 0;
+        transform: rotate(45deg);
+        transition: opacity 0.8s ease-in-out;
     }
 
     @keyframes hand-float {
         0% {
-            transform: translateY(0) rotate(90deg);
+            transform: translateY(0) rotate(45deg);
         }
         100% {
-            transform: translateY(-5px) rotate(90deg);
+            transform: translateY(-5px) rotate(45deg);
         }
     }
 
@@ -481,14 +522,14 @@
         font-size: 24px;
         font-weight: bold;
         color: #B5651D;
-        margin: 0;
+        margin: 0 0 2px 0;
     }
     
     .speech-bubble .dialogue-text {
-        font-size: 22px; /* Smaller text */
+        font-size: 16px; /* Smaller text */
         color: #4E443C;
         line-height: 1.2;
-        margin-top: 5px; /* Reduced space */
+        margin: 0; /* Reduced space */
     }
 
     .fade-out {
@@ -622,15 +663,45 @@
     </script>
 </head>
 <body>
-    <div id="gameContainer">
+    <!-- Top section - Logo strip -->
+    <div class="top-section">
         <img src="assets/avenueLogo/venuelogo.png" alt="Venue Logo" class="logo">
-        
-        <!-- Object Layers -->
-        <div id="objectLayers"></div>
-        
-        <!-- Game Hotspots -->
-        <div id="hotspots"></div>
-
+    </div>
+    
+    <!-- Middle section - Cabin -->
+    <div class="middle-section">
+        <div id="gameContainer">
+            <!-- Object Layers -->
+            <div id="objectLayers"></div>
+            
+            <!-- Game Hotspots -->
+            <div id="hotspots"></div>
+            
+            <!-- Debug HUD -->
+            <div id="debugHud" class="debug-hud" style="display: none;">
+                <h4>Debug Info</h4>
+                <div class="coord">Mouse: <span id="mouseCoords">0, 0</span></div>
+                <div class="coord">Container: <span id="containerCoords">0, 0</span></div>
+            </div>
+            
+            <!-- Final Screen -->
+            <div id="finalScreen" class="final-screen">
+                <div class="final-title">Congratulations!</div>
+                <div class="final-subtitle">Your cabin is complete!</div>
+                <div class="stars">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                </div>
+                <button class="btn btn-primary" onclick="downloadGame()">Click here!</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom section - Intro/Catalog area -->
+    <div class="bottom-section">
         <!-- New Intro UI -->
         <div id="introContainer">
             <div class="character-dialogue">
@@ -640,43 +711,19 @@
                         <div class="character-name">Hillary</div>
                         <div class="dialogue-text">Help me design the dream cabin!</div>
                     </div>
-                    <!-- Play button is removed -->
+                    <button class="play-button" onclick="startDesign()" id="startButton">Start</button>
                 </div>
             </div>
-            <!-- Old tutorial hand is removed from here -->
         </div>
-
-        <!-- Add missing introScreen element -->
-        <div id="introScreen" class="hidden"></div>
         
         <!-- Catalog Modal -->
         <div id="catalog" class="catalog">
             <h2 id="catalogTitle" class="catalog-title">Choose Your Style</h2>
             <div id="catalogGrid" class="catalog-grid"></div>
-            <!-- Add tutorial hand inside the catalog -->
-            <img src="assets/others/hovering hand.png" id="tutorialHand" class="tutorial-hand" alt="Guiding hand">
         </div>
         
-        <!-- Debug HUD -->
-        <div id="debugHud" class="debug-hud" style="display: none;">
-            <h4>Debug Info</h4>
-            <div class="coord">Mouse: <span id="mouseCoords">0, 0</span></div>
-            <div class="coord">Container: <span id="containerCoords">0, 0</span></div>
-        </div>
-        
-        <!-- Final Screen -->
-        <div id="finalScreen" class="final-screen">
-            <div class="final-title">Congratulations!</div>
-            <div class="final-subtitle">Your cabin is complete!</div>
-            <div class="stars">
-                <span class="star">★</span>
-                <span class="star">★</span>
-                <span class="star">★</span>
-                <span class="star">★</span>
-                <span class="star">★</span>
-            </div>
-            <button class="btn btn-primary" onclick="downloadGame()">Click here!</button>
-        </div>
+        <!-- Tutorial hand positioned relative to bottom section -->
+        <img src="assets/others/hovering hand.png" id="tutorialHand" class="tutorial-hand" alt="Guiding hand">
     </div>
 
     <script>
@@ -714,7 +761,24 @@
             console.log("Device detected as: " + (isMobileDevice ? "mobile" : "desktop"));
         });
         
-        // The startDesign function is no longer needed as the game starts immediately.
+        function startDesign() {
+            console.log('Start button clicked!'); // Debug log
+            
+            // Stop the start button tutorial
+            stopStartButtonTutorial();
+            
+            // Hide the intro container
+            const introContainer = document.getElementById('introContainer');
+            if (introContainer) {
+                introContainer.style.opacity = '0';
+                setTimeout(() => {
+                    introContainer.style.display = 'none';
+                }, 500);
+            }
+            
+            // Enable hotspots
+            document.querySelectorAll('.hotspot').forEach(h => h.style.pointerEvents = 'auto');
+        }
         
         function initializeHotspots() {
             const hotspotsContainer = document.getElementById('hotspots');
@@ -736,10 +800,7 @@
                 hotspot.onclick = () => openCatalog(zoneId);
                 hotspot.setAttribute('data-zone', zoneId);
 
-                // Hide the windows hotspot initially since the tutorial opens it
-                if (zoneId === 'windows') {
-                    hotspot.style.display = 'none';
-                }
+                // All hotspots are now visible since we removed automatic tutorial
                 
                 // Position hotspot using percentages for stretch-to-fit
                 const baseWidth = 720;
@@ -1168,6 +1229,70 @@
                 item.classList.remove('tutorial-highlight');
             });
         }
+
+        function startStartButtonTutorial() {
+            const hand = document.getElementById('tutorialHand');
+            const startButton = document.getElementById('startButton');
+            
+            console.log('Starting start button tutorial...');
+            console.log('Hand element:', hand);
+            console.log('Start button element:', startButton);
+            
+            if (!hand || !startButton) {
+                console.error('Missing elements - hand:', hand, 'startButton:', startButton);
+                return;
+            }
+
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.opacity = '1';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            
+            // Position hand to point at the start button from below
+            const updateHandPosition = () => {
+                const buttonRect = startButton.getBoundingClientRect();
+                const bottomSection = document.querySelector('.bottom-section');
+                const containerRect = bottomSection.getBoundingClientRect();
+                
+                console.log('Button rect:', buttonRect);
+                console.log('Container rect:', containerRect);
+                
+                // Position hand below and to the left of the button
+                const topPos = buttonRect.bottom - containerRect.top - 20; // 20px higher up
+                const leftPos = buttonRect.left - containerRect.left - 30; // 30px to the left of the button
+                
+                hand.style.top = `${topPos}px`;
+                hand.style.left = `${leftPos}px`;
+                
+                console.log('Hand positioned at:', leftPos, topPos);
+                console.log('Hand dimensions:', hand.offsetWidth, hand.offsetHeight);
+            };
+            
+            updateHandPosition();
+            
+            // Update position on window resize
+            window.addEventListener('resize', updateHandPosition);
+            
+            // Store the resize handler so we can remove it later
+            hand._resizeHandler = updateHandPosition;
+        }
+
+        function stopStartButtonTutorial() {
+            const hand = document.getElementById('tutorialHand');
+            if (hand) {
+                hand.style.opacity = '0';
+                setTimeout(() => {
+                    hand.style.display = 'none';
+                }, 300);
+                
+                // Remove resize event listener
+                if (hand._resizeHandler) {
+                    window.removeEventListener('resize', hand._resizeHandler);
+                    hand._resizeHandler = null;
+                }
+            }
+        }
         
         function downloadGame() {
             // Analytics
@@ -1213,39 +1338,28 @@
         window.addEventListener('load', function() {
             initializeHotspots();
             
-            // Hotspots are now active from the start, except for the one in tutorial
-            document.querySelectorAll('.hotspot').forEach(h => h.style.pointerEvents = 'auto');
+            // Hotspots are initially disabled until Start is clicked
+            document.querySelectorAll('.hotspot').forEach(h => h.style.pointerEvents = 'none');
+
+            // Add event listener to start button as backup
+            const startButton = document.getElementById('startButton');
+            if (startButton) {
+                startButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Start button clicked via event listener!');
+                    startDesign();
+                });
+            } else {
+                console.error('Start button not found!');
+            }
+
+            // Start the tutorial hand pointing at the start button
+            setTimeout(() => {
+                startStartButtonTutorial();
+            }, 1000); // Wait 1 second after page load
 
             trackEvent('playable_start');
-
-            // Immediately open the windows catalog to start the tutorial
-            setTimeout(() => {
-                openCatalog('windows');
-                // The tutorial animation will be started from within openCatalog
-            }, 500); // Short delay to allow assets to load
         });
-
-        // The old tutorial system is no longer needed in the same way.
-        // The startDesign function is now the primary entry point.
-        // Removing old tutorial functions that are now obsolete.
-        
-        function repositionHotspots() {
-            document.querySelectorAll('.hotspot').forEach(hotspot => {
-                const zoneId = hotspot.getAttribute('data-zone');
-                const zoneConfig = CONFIG.application.zonesConfig[zoneId];
-                if (!zoneConfig || !zoneConfig.dot) {
-                    console.warn(`No dot configuration found for hotspot zone: ${zoneId}`);
-                    return;
-                }
-
-                // Position hotspots relative to the center of the game container
-                // This works with the CSS transform scaling system
-                hotspot.style.left = `calc(50% + ${zoneConfig.dot.x}px)`;
-                hotspot.style.top = `calc(50% + ${zoneConfig.dot.y}px)`;
-            });
-        }
-
-        // The old positionTutorialHand is no longer needed.
     </script>
 </body>
 </html>
