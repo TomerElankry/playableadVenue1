@@ -12,7 +12,7 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
-        background: #000000;
+        background: white;
         width: 100%;
         height: 100%;
         position: fixed;
@@ -24,7 +24,7 @@
     /* Top section - Logo strip */
     .top-section {
         height: 80px;
-        background: rgba(255, 192, 203, 0.9); /* Cozy pink background */
+        background: #F6D1C9; /* Light pink/peach background */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -39,9 +39,11 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #000000;
+        background: white;
         width: min(420px, 100vw);
         margin: 0 auto; /* Center horizontally */
+        border-radius: 20px;
+        border: 2px solid white;
     }
     
     #gameContainer {
@@ -54,12 +56,13 @@
         background-position: center;
         background-repeat: no-repeat;
         overflow: hidden;
+        border-radius: 20px;
     }
     
     /* Bottom section - Intro/Catalog area */
     .bottom-section {
         height: 280px;
-        background: rgba(255, 192, 203, 0.9); /* Cozy pink background */
+        background: white;
         position: relative;
         z-index: 100;
         width: min(420px, 100vw);
@@ -391,7 +394,7 @@
 
     .play-button {
         padding: 10px 16px;
-        background-color: rgba(255, 192, 203, 0.9); /* Pink button */
+        background-color: #F59D44; /* Warm orange button */
         border-radius: 20px;
         font-size: 16px;
         color: #FFFFFF; /* White text */
@@ -406,7 +409,7 @@
     }
     
     .play-button:hover {
-        background-color: rgba(255, 192, 203, 1); /* Darker pink on hover */
+        background-color: #E88A2A; /* Darker orange on hover */
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     }
@@ -428,14 +431,15 @@
         border-radius: 50%;
         border: 4px solid white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        background-image: url('assets/hilary stone/d0944a1d4ca40a130fb160064419b14af8476ddc89a7a29846453b9af4e5e9cd-removebg-preview.png');
+        background-image: url('assets/hilary stone/1618970c4b26552e8ee72c322c2753ce94242c7f.jpg');
         background-size: cover;
+        background-position: 65% center;
         flex-shrink: 0; /* Prevent image from shrinking */
     }
     
     .speech-bubble {
         position: relative;
-        background: rgba(255, 255, 255, 0.95); /* White bubble with 95% opacity */
+        background: #F4ECE6; /* Light beige/off-white bubble */
         border-radius: 20px; /* Softer corners */
         padding: 12px 16px; /* Compact padding */
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
@@ -444,11 +448,25 @@
         font-family: 'Georgia', 'Times New Roman', serif;
         cursor: default;
         display: flex; /* Arrange content horizontally */
-        flex-direction: row;
+        flex-direction: column;
         align-items: center;
         gap: 10px;
         text-align: left;
         margin: 0 auto;
+        margin-left: 12px;
+    }
+
+    .speech-bubble:before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: -10px;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        border-right: 10px solid #F4ECE6;
     }
 
     .tutorial-hand {
@@ -463,16 +481,35 @@
         filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
         top: 0;
         left: 0;
-        transform: rotate(45deg);
+        transform: rotate(-95deg);
         transition: opacity 0.8s ease-in-out;
+        animation: hand-float 1s ease-in-out infinite alternate;
     }
 
     @keyframes hand-float {
         0% {
-            transform: translateY(0) rotate(45deg);
+            transform: translateY(0) rotate(-95deg);
         }
         100% {
-            transform: translateY(-5px) rotate(45deg);
+            transform: translateY(-5px) rotate(-95deg);
+        }
+    }
+
+    @keyframes hand-float-windows {
+        0% {
+            transform: translateY(0) rotate(-15deg);
+        }
+        100% {
+            transform: translateY(-5px) rotate(-15deg);
+        }
+    }
+
+    @keyframes hand-float-catalog {
+        0% {
+            transform: translateY(0) rotate(35deg);
+        }
+        100% {
+            transform: translateY(-5px) rotate(35deg);
         }
     }
 
@@ -519,16 +556,23 @@
     }
     
     .speech-bubble .character-name {
-        font-size: 24px;
+        font-size: 20px;
         font-weight: bold;
-        color: #B5651D;
-        margin: 0 0 2px 0;
+        color: white;
+        margin: -15px 0 8px 0;
+        background: rgba(255, 145, 128, 1);
+        padding: 6px 12px;
+        border-radius: 15px;
+        display: inline-block;
+        text-align: center;
+        position: relative;
+        z-index: 10;
     }
     
     .speech-bubble .dialogue-text {
-        font-size: 16px; /* Smaller text */
+        font-size: 14px; /* Smaller text */
         color: #4E443C;
-        line-height: 1.2;
+        line-height: 1.4;
         margin: 0; /* Reduced space */
     }
 
@@ -581,71 +625,71 @@
                     "view": "items/windows/view/default",
                     "dot": {"x": -250, "y": -280},
                     "variants": [
-                        {"item": "items/windows/item/1", "view": "items/windows/view/1", "name": "Modern Frame"},
-                        {"item": "items/windows/item/2", "view": "items/windows/view/2", "name": "Classic Wood"},
-                        {"item": "items/windows/item/3", "view": "items/windows/view/3", "name": "Rustic Style"},
-                        {"item": "items/windows/item/4", "view": "items/windows/view/4", "name": "Minimalist"},
-                        {"item": "items/windows/item/5", "view": "items/windows/view/5", "name": "Traditional"},
-                        {"item": "items/windows/item/6", "view": "items/windows/view/6", "name": "Contemporary"}
+                        {"item": "items/windows/item/1.png", "view": "items/windows/view/1.png", "name": "Modern Frame"},
+                        {"item": "items/windows/item/2.png", "view": "items/windows/view/2.png", "name": "Classic Wood"},
+                        {"item": "items/windows/item/3.png", "view": "items/windows/view/3.png", "name": "Rustic Style"},
+                        {"item": "items/windows/item/4.png", "view": "items/windows/view/4.png", "name": "Minimalist"},
+                        {"item": "items/windows/item/5.png", "view": "items/windows/view/5.png", "name": "Traditional"},
+                        {"item": "items/windows/item/6.png", "view": "items/windows/view/6.png", "name": "Contemporary"}
                     ]
                 },
                 "chandelier": {
                     "view": "items/chandelier/view/default",
                     "dot": {"x": -4, "y": -129},
                     "variants": [
-                        {"item": "items/chandelier/item/1", "view": "items/chandelier/view/1", "name": "Crystal Elegance"},
-                        {"item": "items/chandelier/item/2", "view": "items/chandelier/view/2", "name": "Modern Pendant"},
-                        {"item": "items/chandelier/item/3", "view": "items/chandelier/view/3", "name": "Rustic Iron"},
-                        {"item": "items/chandelier/item/4", "view": "items/chandelier/view/4", "name": "Globe Light"},
-                        {"item": "items/chandelier/item/5", "view": "items/chandelier/view/5", "name": "Branch Design"},
-                        {"item": "items/chandelier/item/6", "view": "items/chandelier/view/6", "name": "Minimalist Ring"}
+                        {"item": "items/chandelier/item/1.png", "view": "items/chandelier/view/1.png", "name": "Crystal Elegance"},
+                        {"item": "items/chandelier/item/2.png", "view": "items/chandelier/view/2.png", "name": "Modern Pendant"},
+                        {"item": "items/chandelier/item/3.png", "view": "items/chandelier/view/3.png", "name": "Rustic Iron"},
+                        {"item": "items/chandelier/item/4.png", "view": "items/chandelier/view/4.png", "name": "Globe Light"},
+                        {"item": "items/chandelier/item/5.png", "view": "items/chandelier/view/5.png", "name": "Branch Design"},
+                        {"item": "items/chandelier/item/6.png", "view": "items/chandelier/view/6.png", "name": "Minimalist Ring"}
                     ]
                 },
                 "bed_frame": {
                     "view": "items/bed_frame/view/default",
                     "dot": {"x": -100, "y": 512},
                     "variants": [
-                        {"item": "items/bed_frame/item/1", "view": "items/bed_frame/view/1", "name": "Oak Platform"},
-                        {"item": "items/bed_frame/item/2", "view": "items/bed_frame/view/2", "name": "Metal Frame"},
-                        {"item": "items/bed_frame/item/3", "view": "items/bed_frame/view/3", "name": "Upholstered"},
-                        {"item": "items/bed_frame/item/4", "view": "items/bed_frame/view/4", "name": "Minimalist"},
-                        {"item": "items/bed_frame/item/5", "view": "items/bed_frame/view/5", "name": "Rustic Wood"},
-                        {"item": "items/bed_frame/item/6", "view": "items/bed_frame/view/6", "name": "Modern Steel"}
+                        {"item": "items/bed_frame/item/1.png", "view": "items/bed_frame/view/1.png", "name": "Oak Platform"},
+                        {"item": "items/bed_frame/item/2.png", "view": "items/bed_frame/view/2.png", "name": "Metal Frame"},
+                        {"item": "items/bed_frame/item/3.png", "view": "items/bed_frame/view/3.png", "name": "Upholstered"},
+                        {"item": "items/bed_frame/item/4.png", "view": "items/bed_frame/view/4.png", "name": "Minimalist"},
+                        {"item": "items/bed_frame/item/5.png", "view": "items/bed_frame/view/5.png", "name": "Rustic Wood"},
+                        {"item": "items/bed_frame/item/6.png", "view": "items/bed_frame/view/6.png", "name": "Modern Steel"}
                     ]
                 },
                 "bed_sheets": {
                     "view": "items/bed_sheets/view/default",
                     "dot": {"x": -50, "y": 380},
                     "variants": [
-                        {"item": "items/bed_sheets/item/1", "view": "items/bed_sheets/view/1", "name": "White Linen"},
-                        {"item": "items/bed_sheets/item/2", "view": "items/bed_sheets/view/2", "name": "Navy Cotton"},
-                        {"item": "items/bed_sheets/item/3", "view": "items/bed_sheets/view/3", "name": "Gray Silk"},
-                        {"item": "items/bed_sheets/item/4", "view": "items/bed_sheets/view/4", "name": "Cream Satin"},
-                        {"item": "items/bed_sheets/item/5", "view": "items/bed_sheets/view/5", "name": "Earth Tones"},
-                        {"item": "items/bed_sheets/item/6", "view": "items/bed_sheets/view/6", "name": "Floral Print"}
+                        {"item": "items/bed_sheets/item/1.png", "view": "items/bed_sheets/view/1.png", "name": "White Linen"},
+                        {"item": "items/bed_sheets/item/2.png", "view": "items/bed_sheets/view/2.png", "name": "Navy Cotton"},
+                        {"item": "items/bed_sheets/item/3.png", "view": "items/bed_sheets/view/3.png", "name": "Gray Silk"},
+                        {"item": "items/bed_sheets/item/4.png", "view": "items/bed_sheets/view/4.png", "name": "Cream Satin"},
+                        {"item": "items/bed_sheets/item/5.png", "view": "items/bed_sheets/view/5.png", "name": "Earth Tones"},
+                        {"item": "items/bed_sheets/item/6.png", "view": "items/bed_sheets/view/6.png", "name": "Floral Print"}
                     ]
                 },
                 "floor": {
                     "view": "items/floor/view/default",
                     "dot": {"x": -250, "y": 550},
                     "variants": [
-                        {"item": "items/floor/item/1", "view": "items/floor/view/1", "name": "Oak Hardwood"},
-                        {"item": "items/floor/item/2", "view": "items/floor/view/2", "name": "Stone Tile"},
-                        {"item": "items/floor/item/3", "view": "items/floor/view/3", "name": "Bamboo"},
-                        {"item": "items/floor/item/4", "view": "items/floor/view/4", "name": "Marble"},
-                        {"item": "items/floor/item/5", "view": "items/floor/view/5", "name": "Pine Wood"},
-                        {"item": "items/floor/item/6", "view": "items/floor/view/6", "name": "Ceramic"}
+                        {"item": "items/floor/item/1.png", "view": "items/floor/view/1.png", "name": "Oak Hardwood"},
+                        {"item": "items/floor/item/2.png", "view": "items/floor/view/2.png", "name": "Stone Tile"},
+                        {"item": "items/floor/item/3.png", "view": "items/floor/view/3.png", "name": "Bamboo"},
+                        {"item": "items/floor/item/4.png", "view": "items/floor/view/4.png", "name": "Marble"},
+                        {"item": "items/floor/item/5.png", "view": "items/floor/view/5.png", "name": "Pine Wood"},
+                        {"item": "items/floor/item/6.png", "view": "items/floor/view/6.png", "name": "Ceramic"}
                     ]
                 },
                 "walls": {
                     "dot": {"x": 120, "y": 250},
                     "variants": [
-                        {"item": "items/walls/wall1-optimized", "view": "items/walls/wall1-optimized", "name": "Oak Panels"},
-                        {"item": "items/walls/wall2-optimized", "view": "items/walls/wall2-optimized", "name": "Floating White"},
-                        {"item": "items/walls/wall3-optimized", "view": "items/walls/wall3-optimized", "name": "Industrial Pipe"},
-                        {"item": "items/walls/wall4-optimized", "view": "items/walls/wall4-optimized", "name": "Minimalist Black"},
-                        {"item": "items/walls/wall5-optimized", "view": "items/walls/wall5-optimized", "name": "Rustic Wood"},
-                        {"item": "items/walls/wall6-optimized", "view": "items/walls/wall6-optimized", "name": "Glass & Steel"}
+                        {"item": "items/walls/wall1-optimized.png", "view": "items/walls/wall1-optimized.png", "name": "Oak Panels"},
+                        {"item": "items/walls/wall2-optimized.png", "view": "items/walls/wall2-optimized.png", "name": "Floating White"},
+                        {"item": "items/walls/wall3-optimized.png", "view": "items/walls/wall3-optimized.png", "name": "Industrial Pipe"},
+                        {"item": "items/walls/wall4-optimized.png", "view": "items/walls/wall4-optimized.png", "name": "Minimalist Black"},
+                        {"item": "items/walls/wall5-optimized.png", "view": "items/walls/wall5-optimized.png", "name": "Rustic Wood"},
+                        {"item": "items/walls/wall6-optimized.png", "view": "items/walls/wall6-optimized.png", "name": "Glass & Steel"}
                     ]
                 }
             },
@@ -665,7 +709,7 @@
 <body>
     <!-- Top section - Logo strip -->
     <div class="top-section">
-        <img src="assets/avenueLogo/venuelogo.png" alt="Venue Logo" class="logo">
+        <img src="assets/avenueLogo/0bcc9c966f0cd81e21b73073b6486eae28f2e07f.png" alt="Venue Logo" class="logo">
     </div>
     
     <!-- Middle section - Cabin -->
@@ -708,10 +752,10 @@
                 <div class="character-portrait"></div>
                 <div class="speech-bubble">
                     <div class="dialogue-content">
-                        <div class="character-name">Hillary</div>
-                        <div class="dialogue-text">Help me design the dream cabin!</div>
+                        <div class="character-name">Hylary Shades</div>
+                        <div class="dialogue-text">Help me to design the dream cabin in a serene retreat that blends modern minimalism with natural warmth.  Add subtle greenery, cozy throws, and understated lighting to create a tranquil atmosphere where nature and comfort meet.</div>
                     </div>
-                    <button class="play-button" onclick="startDesign()" id="startButton">Start</button>
+                    <button class="play-button" onclick="startDesign()" id="startButton">Start Design</button>
                 </div>
             </div>
         </div>
@@ -767,17 +811,24 @@
             // Stop the start button tutorial
             stopStartButtonTutorial();
             
-            // Hide the intro container
+            // Hide the intro container with smooth fade out
             const introContainer = document.getElementById('introContainer');
             if (introContainer) {
+                introContainer.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
                 introContainer.style.opacity = '0';
+                introContainer.style.transform = 'translateY(20px)';
                 setTimeout(() => {
                     introContainer.style.display = 'none';
-                }, 500);
+                }, 800);
             }
             
             // Enable hotspots
             document.querySelectorAll('.hotspot').forEach(h => h.style.pointerEvents = 'auto');
+            
+            // Start windows tutorial right after intro fades out
+            setTimeout(() => {
+                startWindowsHotspotTutorial();
+            }, 800);
         }
         
         function initializeHotspots() {
@@ -1167,33 +1218,40 @@
 
             if (!hand || items.length < 3) { return; }
 
+            // Show the hand with specific rotation for catalog tutorial
             hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            hand.style.transform = 'rotate(35deg)'; // Rotated 20 degrees down from 15deg
+            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
+            
+            // Fade in smoothly
             setTimeout(() => {
-                hand.style.visibility = 'visible';
                 hand.style.opacity = '1';
-            }, 100);
-
-            let currentIndex = 0;
-            const animateHand = () => {
-                if (!isTutorialActive) return;
-
-                items.forEach(item => item.classList.remove('tutorial-highlight'));
-
-                const item = items[currentIndex];
-                if (!item) return;
-
-                const itemRect = item.getBoundingClientRect();
-                const catalogRect = catalog.getBoundingClientRect();
-
-                item.classList.add('tutorial-highlight');
                 
-                hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 10}px`;
-                hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 10}px`;
+                // Highlight the middle item only after hand finishes fading in
+                setTimeout(() => {
+                    const middleItem = items[1];
+                    if (middleItem) {
+                        middleItem.classList.add('tutorial-highlight');
+                        previewVariant(2); // Preview the middle option (index 1 + 1)
+                    }
+                }, 800); // Wait for fade-in to complete (0.8s)
+            }, 50);
 
-                previewVariant(currentIndex + 1);
-                
-                currentIndex = (currentIndex + 1) % items.length;
-            };
+            // Point only to the middle option (index 1)
+            const middleItem = items[1];
+            if (!middleItem) return;
+
+            const itemRect = middleItem.getBoundingClientRect();
+            const catalogRect = catalog.getBoundingClientRect();
+
+            // Position hand to point at the middle item (moved to the right and down)
+            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 50}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
 
             const handleUserInteraction = () => {
                 if (isTutorialActive) {
@@ -1201,11 +1259,10 @@
                 }
             };
 
-            catalog.addEventListener('mousemove', handleUserInteraction, { once: true });
-            catalog.addEventListener('touchstart', handleUserInteraction, { once: true });
-            
-            animateHand();
-            tutorialInterval = setInterval(animateHand, 2000); // Set to 2 seconds
+            // Stop tutorial when user clicks any catalog item
+            items.forEach(item => {
+                item.addEventListener('click', handleUserInteraction, { once: true });
+            });
         }
 
         function stopTutorial() {
@@ -1245,9 +1302,15 @@
 
             hand.style.display = 'block';
             hand.style.visibility = 'visible';
-            hand.style.opacity = '1';
             hand.style.position = 'absolute';
             hand.style.zIndex = '1000';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
+            
+            // Fade in smoothly
+            setTimeout(() => {
+                hand.style.opacity = '1';
+            }, 50);
             
             // Position hand to point at the start button from below
             const updateHandPosition = () => {
@@ -1259,8 +1322,8 @@
                 console.log('Container rect:', containerRect);
                 
                 // Position hand below and to the left of the button
-                const topPos = buttonRect.bottom - containerRect.top - 20; // 20px higher up
-                const leftPos = buttonRect.left - containerRect.left - 30; // 30px to the left of the button
+                const topPos = buttonRect.bottom - containerRect.top - 80; // 20px higher up
+                const leftPos = buttonRect.left - containerRect.left + 130; // 30px to the left of the button
                 
                 hand.style.top = `${topPos}px`;
                 hand.style.left = `${leftPos}px`;
@@ -1292,6 +1355,69 @@
                     hand._resizeHandler = null;
                 }
             }
+        }
+
+        function startWindowsHotspotTutorial() {
+            const hand = document.getElementById('tutorialHand');
+            const windowsHotspot = document.getElementById('hotspot-windows');
+            
+            if (!hand || !windowsHotspot) {
+                console.error('Missing elements for windows tutorial');
+                return;
+            }
+
+            // Position hand to point at the windows hotspot
+            const updateHandPosition = () => {
+                const hotspotRect = windowsHotspot.getBoundingClientRect();
+                const gameContainer = document.getElementById('gameContainer');
+                const containerRect = gameContainer.getBoundingClientRect();
+                
+                // Position hand next to the hotspot
+                const screenHeight = window.innerHeight;
+                const topPos = hotspotRect.top - containerRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) - (screenHeight / 2.4);
+                const leftPos = hotspotRect.left - containerRect.left - hand.offsetWidth + 70;
+                
+                hand.style.top = `${topPos}px`;
+                hand.style.left = `${leftPos}px`;
+            };
+            
+            // Show the hand with specific rotation for windows tutorial
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            hand.style.transform = 'rotate(-15deg)'; // Specific rotation for windows tutorial
+            hand.style.animation = 'hand-float-windows 1s ease-in-out infinite alternate';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
+            
+            // Fade in smoothly
+            setTimeout(() => {
+                hand.style.opacity = '1';
+            }, 50);
+            
+            updateHandPosition();
+            
+            // Update position on window resize
+            window.addEventListener('resize', updateHandPosition);
+            
+            // Store the resize handler so we can remove it later
+            hand._resizeHandler = updateHandPosition;
+            
+            // Stop tutorial when user clicks on windows hotspot
+            const stopTutorial = () => {
+                hand.style.opacity = '0';
+                setTimeout(() => {
+                    hand.style.display = 'none';
+                }, 300);
+                
+                if (hand._resizeHandler) {
+                    window.removeEventListener('resize', hand._resizeHandler);
+                    hand._resizeHandler = null;
+                }
+            };
+            
+            windowsHotspot.addEventListener('click', stopTutorial, { once: true });
         }
         
         function downloadGame() {
