@@ -186,8 +186,12 @@
     }
     
     .catalog-item:hover {
-        border-color: #B5651D;
         transform: scale(1.03);
+    }
+    
+    .catalog-item.previewed {
+        border-color: #B5651D;
+        background: rgba(191, 216, 189, 0.8); /* Cozy sage green */
     }
     
     .catalog-item.selected {
@@ -218,8 +222,41 @@
     
     .catalog-buttons {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         margin-top: 20px;
+    }
+    
+    .select-button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        min-width: 120px;
+        display: none; /* Hidden by default */
+    }
+    
+    .select-button.disabled {
+        background: #6c757d; /* Grey */
+        color: #ffffff;
+        cursor: not-allowed;
+    }
+    
+    .select-button.enabled {
+        background: #BFD8BD; /* Cozy sage green */
+        color: #4E443C; /* Dark brown text */
+        cursor: pointer;
+    }
+    
+    .select-button.enabled:hover {
+        background: #a9c7aa; /* Slightly darker green on hover */
+        transform: translateY(-2px);
+    }
+    
+    .select-button.visible {
+        display: block;
     }
     
     .btn {
@@ -762,8 +799,10 @@
         
         <!-- Catalog Modal -->
         <div id="catalog" class="catalog">
-            <h2 id="catalogTitle" class="catalog-title">Choose Your Style</h2>
             <div id="catalogGrid" class="catalog-grid"></div>
+            <div class="catalog-buttons">
+                <button id="selectButton" class="select-button" onclick="confirmSelection()">Select</button>
+            </div>
         </div>
         
         <!-- Tutorial hand positioned relative to bottom section -->
@@ -774,7 +813,8 @@
         let gameState = {
             confirmedZones: {},
             selectedVariant: null,
-            currentZone: null
+            currentZone: null,
+            totalObjectsChosen: 0 // Global counter for total objects chosen
         };
 
         let isTutorialActive = true;
@@ -883,16 +923,16 @@
                 hotspot.style.pointerEvents = 'none';
             }
 
-            // If tutorial is active, clicking should stop it.
-            // Removed erroneous tutorial stop here; tutorial should run on initial windows open.
-
             gameState.currentZone = zoneId;
             const zoneConfig = CONFIG.application.zonesConfig[zoneId];
             const catalog = document.getElementById('catalog');
-            const catalogTitle = document.getElementById('catalogTitle');
             const catalogGrid = document.getElementById('catalogGrid');
+            const selectButton = document.getElementById('selectButton');
             
-            catalogTitle.textContent = `Choose ${zoneId.replace('_', ' ').toUpperCase()}`;
+            // Show select button initially in disabled state
+            selectButton.classList.add('visible', 'disabled');
+            selectButton.classList.remove('enabled');
+            updateSelectButtonText();
             catalogGrid.innerHTML = '';
             
             const objectData = gameData[zoneId];
@@ -905,9 +945,8 @@
                 const variant = zoneConfig.variants[i-1] || { name: `${objectData.name} #${i}`};
                 const item = document.createElement('div');
                 item.className = 'catalog-item';
-                item.onmouseenter = () => previewVariant(i); // Use index + 1
                 
-                // Direct event handler for first click to remove intro
+                // Click handler for preview
                 item.addEventListener('click', function() {
                     // Remove intro container immediately on any catalog item click
                     const introContainer = document.getElementById('introContainer');
@@ -915,9 +954,19 @@
                         introContainer.parentNode.removeChild(introContainer);
                     }
                     
-                    // Then handle the normal variant confirmation
-                    confirmVariant(i); // Use index + 1
-                }, {once: true}); // This ensures the handler runs only once
+                    // Stop tutorial hand on first click
+                    if (isTutorialActive) {
+                        stopTutorial();
+                    }
+                    
+                    // Preview the variant
+                    previewVariant(i);
+                    
+                    // Enable select button
+                    selectButton.classList.remove('disabled');
+                    selectButton.classList.add('enabled');
+                    updateSelectButtonText();
+                });
                 
                 const img = document.createElement('img');
                 img.src = objectData.thumbPath(i);
@@ -944,6 +993,8 @@
             // If this is the tutorial, start the hand animation
             if (isTutorialActive && zoneId === 'windows') {
                 setTimeout(startWindowsTutorial, 600); // Increased delay to ensure catalog is visible
+            } else if (isTutorialActive && zoneId === 'chandelier') {
+                setTimeout(startChandelierTutorial, 600); // Start chandelier catalog tutorial
             }
         }
         
@@ -951,9 +1002,12 @@
             gameState.selectedVariant = variantIndex;
             const zoneId = gameState.currentZone;
             
-            // Highlight in catalog
+            // Highlight in catalog as previewed (not selected)
             document.querySelectorAll('.catalog-item').forEach((item, index) => {
-                item.classList.toggle('selected', index === variantIndex - 1);
+                item.classList.remove('selected', 'previewed');
+                if (index === variantIndex - 1) {
+                    item.classList.add('previewed');
+                }
             });
             
             // Preview in scene
@@ -972,19 +1026,17 @@
             }
         }
 
-        function confirmVariant(variantIndex) {
-            const zoneId = gameState.currentZone;
-            gameState.selectedVariant = variantIndex;
+        function updateSelectButtonText() {
+            const selectButton = document.getElementById('selectButton');
+            const totalObjects = CONFIG.application.zones.length; // Total number of zones (6)
+            selectButton.textContent = `Select ${gameState.totalObjectsChosen}/${totalObjects}`;
+        }
 
-            // If the tutorial is active, this click ends it.
-            if (isTutorialActive) {
-                stopTutorial();
-                // Remove the entire intro container immediately
-                const introContainer = document.getElementById('introContainer');
-                if (introContainer) {
-                    introContainer.remove();
-                }
-            }
+        function confirmSelection() {
+            if (gameState.selectedVariant === null || !gameState.currentZone) return;
+            
+            const variantIndex = gameState.selectedVariant;
+            const zoneId = gameState.currentZone;
 
             // Update the view with the selected variant
             const zoneElement = document.getElementById(`zone-${zoneId}`);
@@ -998,8 +1050,9 @@
                 }
             }
             
-            // Highlight the final choice briefly
+            // Highlight the final choice as selected
             document.querySelectorAll('.catalog-item').forEach((item, index) => {
+                item.classList.remove('previewed');
                 item.classList.toggle('selected', index === variantIndex - 1);
             });
 
@@ -1010,6 +1063,11 @@
             }
 
             approveSelection(); // Directly call the approval logic
+        }
+
+        function confirmVariant(variantIndex) {
+            // This function is kept for backward compatibility but now just calls confirmSelection
+            confirmSelection();
         }
         
         function createAchievementEffect(x, y) {
@@ -1038,6 +1096,82 @@
             }, 1200); // Remove after the longest animation finishes
         }
 
+        function startNextTutorial() {
+            const zones = CONFIG.application.zones;
+            const confirmedCount = Object.keys(gameState.confirmedZones).length;
+            
+            // If we haven't completed all zones, start tutorial for next hotspot
+            if (confirmedCount < zones.length) {
+                const nextZone = zones[confirmedCount];
+                setTimeout(() => {
+                    startHotspotTutorial(nextZone);
+                }, 600); // Wait for catalog fade to complete
+            }
+        }
+
+        function startHotspotTutorial(zoneId) {
+            const hand = document.getElementById('tutorialHand');
+            const hotspot = document.getElementById(`hotspot-${zoneId}`);
+            
+            if (!hand || !hotspot) {
+                console.error('Missing elements for hotspot tutorial');
+                return;
+            }
+
+            // Position hand to point at the hotspot
+            const updateHandPosition = () => {
+                const hotspotRect = hotspot.getBoundingClientRect();
+                const gameContainer = document.getElementById('gameContainer');
+                const containerRect = gameContainer.getBoundingClientRect();
+                
+                // Position hand next to the hotspot
+                const screenHeight = window.innerHeight;
+                const topPos = hotspotRect.top - containerRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) - (screenHeight / 2.4);
+                const leftPos = hotspotRect.left - containerRect.left - hand.offsetWidth + 70;
+                
+                hand.style.top = `${topPos}px`;
+                hand.style.left = `${leftPos}px`;
+            };
+            
+            // Show the hand with specific rotation
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            hand.style.transform = 'rotate(-15deg)'; // Specific rotation for hotspot tutorial
+            hand.style.animation = 'hand-float-windows 1s ease-in-out infinite alternate';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
+            
+            // Fade in smoothly
+            setTimeout(() => {
+                hand.style.opacity = '1';
+            }, 50);
+            
+            updateHandPosition();
+            
+            // Update position on window resize
+            window.addEventListener('resize', updateHandPosition);
+            
+            // Store the resize handler so we can remove it later
+            hand._resizeHandler = updateHandPosition;
+            
+            // Stop tutorial when user clicks on hotspot
+            const stopTutorial = () => {
+                hand.style.opacity = '0';
+                setTimeout(() => {
+                    hand.style.display = 'none';
+                }, 300);
+                
+                if (hand._resizeHandler) {
+                    window.removeEventListener('resize', hand._resizeHandler);
+                    hand._resizeHandler = null;
+                }
+            };
+            
+            hotspot.addEventListener('click', stopTutorial, { once: true });
+        }
+
         function approveSelection() {
             if (gameState.selectedVariant === null || !gameState.currentZone) return;
             
@@ -1045,6 +1179,7 @@
             const variantIndex = gameState.selectedVariant;
             
             gameState.confirmedZones[zoneId] = variantIndex;
+            gameState.totalObjectsChosen++; // Increment global counter
             
             // Update the actual object in the scene
             replaceObject(zoneId, variantIndex); // Use the variantIndex directly
@@ -1053,7 +1188,16 @@
             const hotspot = document.getElementById(`hotspot-${zoneId}`);
             // Hotspot is already hidden, so no need to change its appearance
             
+            // Disable select button and update text
+            const selectButton = document.getElementById('selectButton');
+            selectButton.classList.remove('enabled');
+            selectButton.classList.add('disabled');
+            updateSelectButtonText();
+            
             closeCatalog();
+            
+            // Start tutorial for next hotspot
+            startNextTutorial();
             
             // Check if all zones are confirmed
             const totalZones = CONFIG.application.zones.length;
@@ -1190,7 +1334,20 @@
         }
         
         function closeCatalog() {
-            document.getElementById('catalog').classList.remove('visible'); // Slide out
+            const catalog = document.getElementById('catalog');
+            const selectButton = document.getElementById('selectButton');
+            
+            // Add fade out animation
+            catalog.style.transition = 'opacity 0.5s ease-out';
+            catalog.style.opacity = '0';
+            
+            setTimeout(() => {
+                catalog.classList.remove('visible');
+                catalog.style.opacity = '1'; // Reset for next time
+                catalog.style.transition = ''; // Reset transition
+            }, 500);
+            
+            selectButton.classList.remove('visible'); // Hide select button
             gameState.selectedVariant = null;
             gameState.currentZone = null;
         }
@@ -1224,6 +1381,60 @@
             hand.style.position = 'absolute';
             hand.style.zIndex = '1000';
             hand.style.transform = 'rotate(35deg)'; // Rotated 20 degrees down from 15deg
+            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
+            
+            // Fade in smoothly
+            setTimeout(() => {
+                hand.style.opacity = '1';
+                
+                // Highlight the middle item only after hand finishes fading in
+                setTimeout(() => {
+                    const middleItem = items[1];
+                    if (middleItem) {
+                        middleItem.classList.add('tutorial-highlight');
+                        previewVariant(2); // Preview the middle option (index 1 + 1)
+                    }
+                }, 800); // Wait for fade-in to complete (0.8s)
+            }, 50);
+
+            // Point only to the middle option (index 1)
+            const middleItem = items[1];
+            if (!middleItem) return;
+
+            const itemRect = middleItem.getBoundingClientRect();
+            const catalogRect = catalog.getBoundingClientRect();
+
+            // Position hand to point at the middle item (moved to the right and down)
+            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 50}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+
+            const handleUserInteraction = () => {
+                if (isTutorialActive) {
+                    stopTutorial();
+                }
+            };
+
+            // Stop tutorial when user clicks any catalog item
+            items.forEach(item => {
+                item.addEventListener('click', handleUserInteraction, { once: true });
+            });
+        }
+
+        function startChandelierTutorial() {
+            const hand = document.getElementById('tutorialHand');
+            const catalog = document.getElementById('catalog');
+            const items = catalog.querySelectorAll('.catalog-item');
+
+            if (!hand || items.length < 3) { return; }
+
+            // Show the hand with specific rotation for catalog tutorial
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            hand.style.transform = 'rotate(35deg)'; // Same rotation as windows tutorial
             hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
             hand.style.transition = 'opacity 0.8s ease-in-out';
             hand.style.opacity = '0';
