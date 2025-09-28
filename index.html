@@ -230,8 +230,9 @@
     
     .catalog-item img {
         width: 100%; /* Full width to eliminate gaps */
-        height: 50px; /* Keep same height */
-        object-fit: cover;
+        height: 70px; /* Increased height to expand thumbnail and eliminate strip */
+        object-fit: cover; /* Changed back to cover to spread horizontally */
+        object-position: center; /* Center the thumbnail within the frame */
         border-radius: 14px 14px 0 0; /* Match outer frame radius, only top corners rounded */
         margin: 0; /* No margins for seamless connection */
         border: none; /* Remove all borders for seamless merging */
@@ -239,6 +240,19 @@
         background: #FFFFFF; /* White background for the inner frame */
         padding: 0; /* Remove all padding for seamless connection */
         display: block; /* Ensure proper display */
+        position: relative; /* For gradient overlay */
+    }
+    
+    /* Add fade gradient overlay at bottom of thumbnail */
+    .catalog-item img::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 15px; /* Height of the fade effect */
+        background: linear-gradient(to bottom, transparent, rgba(246, 209, 201, 0.3));
+        pointer-events: none; /* Don't interfere with clicks */
     }
 
     .catalog-item-name {
@@ -718,11 +732,11 @@
                     "view": "items/chandelier/view/default",
                     "dot": {"x": -4, "y": -129},
                     "variants": [
-                        {"item": "items/chandelier/item/1.png", "view": "items/chandelier/view/1.png", "name": "Crystal Elegance"},
-                        {"item": "items/chandelier/item/2.png", "view": "items/chandelier/view/2.png", "name": "Modern Pendant"},
-                        {"item": "items/chandelier/item/3.png", "view": "items/chandelier/view/3.png", "name": "Rustic Iron"},
+                        {"item": "items/chandelier/item/1.png", "view": "items/chandelier/view/1.png", "name": "Modern Pendant"},
+                        {"item": "items/chandelier/item/2.png", "view": "items/chandelier/view/2.png", "name": "Rustic Iron"},
+                        {"item": "items/chandelier/item/3.png", "view": "items/chandelier/view/3.png", "name": "Branch Design"},
                         {"item": "items/chandelier/item/4.png", "view": "items/chandelier/view/4.png", "name": "Globe Light"},
-                        {"item": "items/chandelier/item/5.png", "view": "items/chandelier/view/5.png", "name": "Branch Design"},
+                        {"item": "items/chandelier/item/5.png", "view": "items/chandelier/view/5.png", "name": "Industrial Cage"},
                         {"item": "items/chandelier/item/6.png", "view": "items/chandelier/view/6.png", "name": "Minimalist Ring"}
                     ]
                 },
@@ -742,12 +756,12 @@
                     "view": "items/bed_sheets/view/default",
                     "dot": {"x": -50, "y": 380},
                     "variants": [
-                        {"item": "items/bed_sheets/item/1.png", "view": "items/bed_sheets/view/1.png", "name": "White Linen"},
-                        {"item": "items/bed_sheets/item/2.png", "view": "items/bed_sheets/view/2.png", "name": "Navy Cotton"},
-                        {"item": "items/bed_sheets/item/3.png", "view": "items/bed_sheets/view/3.png", "name": "Gray Silk"},
-                        {"item": "items/bed_sheets/item/4.png", "view": "items/bed_sheets/view/4.png", "name": "Cream Satin"},
-                        {"item": "items/bed_sheets/item/5.png", "view": "items/bed_sheets/view/5.png", "name": "Earth Tones"},
-                        {"item": "items/bed_sheets/item/6.png", "view": "items/bed_sheets/view/6.png", "name": "Floral Print"}
+                        {"item": "items/bed_sheets/item/1.png", "view": "items/bed_sheets/view/1.png", "name": "Tan Soft Plaid"},
+                        {"item": "items/bed_sheets/item/2.png", "view": "items/bed_sheets/view/2.png", "name": "Wet Sand"},
+                        {"item": "items/bed_sheets/item/3.png", "view": "items/bed_sheets/view/3.png", "name": "Honey Linen"},
+                        {"item": "items/bed_sheets/item/4.png", "view": "items/bed_sheets/view/4.png", "name": "Hazel Wood Linen"},
+                        {"item": "items/bed_sheets/item/5.png", "view": "items/bed_sheets/view/5.png", "name": "Deep Pine Velvet"},
+                        {"item": "items/bed_sheets/item/6.png", "view": "items/bed_sheets/view/6.png", "name": "Stormy Linen"}
                     ]
                 },
                 "floor": {
@@ -868,9 +882,39 @@
         // A more structured and flexible way to define game objects
         const gameData = {
             'windows': { name: 'Windows', itemCount: 6, thumbPath: (i) => `assets/thumbs/windows/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/windows/view/${i}.png?v=${new Date().getTime()}` },
-            'chandelier': { name: 'Chandelier', itemCount: 6, thumbPath: (i) => `assets/thumbs/chandelier/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/chandelier/view/${i}.png?v=${new Date().getTime()}` },
+            'chandelier': { 
+                name: 'Chandelier', 
+                itemCount: 6, 
+                thumbPath: (i) => {
+                    const thumbnails = [
+                        'modernPendantThumbnail.jpg',
+                        'rusticIronThumbnail.jpg', 
+                        'branchDesignThumbnail.jpg',
+                        'gloveLightThumbnail.jpg',
+                        'industrialCageThumbnail.jpg',
+                        'minimalisticRingThumbnail.jpg'
+                    ];
+                    return `assets/thumbs/chandelier/${thumbnails[i-1]}?v=${new Date().getTime()}`;
+                }, 
+                viewPath: (i) => `assets/items/chandelier/view/${i}.png?v=${new Date().getTime()}` 
+            },
             'bed_frame': { name: 'Bed Frame', itemCount: 6, thumbPath: (i) => `assets/thumbs/bed_frame/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/bed_frame/view/${i}.png?v=${new Date().getTime()}` },
-            'bed_sheets': { name: 'Bed Sheets', itemCount: 6, thumbPath: (i) => `assets/thumbs/bed_sheets/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/bed_sheets/view/${i}.png?v=${new Date().getTime()}` },
+            'bed_sheets': { 
+                name: 'Bed Sheets', 
+                itemCount: 6, 
+                thumbPath: (i) => {
+                    const thumbnails = [
+                        'TanSoftPlaidThumbnail.jpg',
+                        'wetSandThumbnail.jpg', 
+                        'honeyLinenThumbnail.jpg',
+                        'Hazel Wood Linen thumbnail.jpg',
+                        'DeepPineVelvetThumbnail.jpg',
+                        'stormyLinenThumbnail.jpg'
+                    ];
+                    return `assets/thumbs/bed_sheets/${thumbnails[i-1]}?v=${new Date().getTime()}`;
+                }, 
+                viewPath: (i) => `assets/items/bed_sheets/view/${i}.png?v=${new Date().getTime()}` 
+            },
             'floor': { name: 'Floor', itemCount: 6, thumbPath: (i) => `assets/thumbs/floor/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/floor/view/${i}.png?v=${new Date().getTime()}` },
             'walls': { name: 'Walls', itemCount: 6, thumbPath: (i) => `assets/items/walls/wall${i}-optimized.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/walls/wall${i}-optimized.png?v=${new Date().getTime()}` },
         };
