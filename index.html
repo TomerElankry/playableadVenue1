@@ -120,6 +120,7 @@
         font-weight: bold; /* Make the plus sign thicker */
         z-index: 10; /* Ensure hotspots are always on top */
     }
+
     
     .hotspot:hover {
         transform: translate(-50%, -50%) scale(1.1);
@@ -231,7 +232,7 @@
     .catalog-item img {
         width: 100%; /* Full width to eliminate gaps */
         height: 70px; /* Increased height to expand thumbnail and eliminate strip */
-        object-fit: cover; /* Changed back to cover to spread horizontally */
+        object-fit: contain; /* Changed from cover to contain to show whole thumbnail */
         object-position: center; /* Center the thumbnail within the frame */
         border-radius: 14px 14px 0 0; /* Match outer frame radius, only top corners rounded */
         margin: 0; /* No margins for seamless connection */
@@ -872,12 +873,38 @@
             confirmedZones: {},
             selectedVariant: null,
             currentZone: null,
-            totalObjectsChosen: 0 // Global counter for total objects chosen
+            totalObjectsChosen: 0, // Global counter for total objects chosen
+            completedZones: [] // Track which zones have been completed
         };
 
         let isTutorialActive = true;
         let tutorialInterval = null;
         let isMobileDevice = false;
+
+        // Function to get the next recommended zone (in original order)
+        function getNextRecommendedZone() {
+            const originalOrder = ['windows', 'chandelier', 'bed_frame', 'bed_sheets', 'floor', 'walls'];
+            return originalOrder.find(zone => !gameState.completedZones.includes(zone));
+        }
+
+        // Function to check if a zone is completed
+        function isZoneCompleted(zoneId) {
+            return gameState.completedZones.includes(zoneId);
+        }
+
+        // Function to make a hotspot disappear
+        function hideCompletedHotspot(zoneId) {
+            const hotspot = document.getElementById(`hotspot-${zoneId}`);
+            if (hotspot) {
+                hotspot.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                hotspot.style.opacity = '0';
+                hotspot.style.transform = 'translate(-50%, -50%) scale(0.5)';
+                setTimeout(() => {
+                    hotspot.style.display = 'none';
+                }, 500);
+            }
+        }
+
 
         // A more structured and flexible way to define game objects
         const gameData = {
@@ -956,9 +983,12 @@
                 console.log('Enabled hotspot:', h.id);
             });
             
-            // Start windows tutorial right after intro fades out
+            // Start tutorial for first recommended zone right after intro fades out
             setTimeout(() => {
-                startWindowsHotspotTutorial();
+                const firstRecommendedZone = getNextRecommendedZone();
+                if (firstRecommendedZone) {
+                    startHotspotTutorial(firstRecommendedZone);
+                }
             }, 800);
         }
         
@@ -1228,15 +1258,23 @@
         }
 
         function startNextTutorial() {
-            const zones = CONFIG.application.zones;
-            const confirmedCount = Object.keys(gameState.confirmedZones).length;
+            const nextRecommendedZone = getNextRecommendedZone();
             
-            // If we haven't completed all zones, start tutorial for next hotspot
-            if (confirmedCount < zones.length) {
-                const nextZone = zones[confirmedCount];
+            // If there are uncompleted zones, start tutorial for next recommended hotspot
+            if (nextRecommendedZone) {
+                console.log(`Next recommended zone: ${nextRecommendedZone}`);
                 setTimeout(() => {
-                    startHotspotTutorial(nextZone);
+                    startHotspotTutorial(nextRecommendedZone);
                 }, 600); // Wait for catalog fade to complete
+            } else {
+                // All zones completed, hide tutorial hand
+                const hand = document.getElementById('tutorialHand');
+                if (hand) {
+                    hand.style.display = 'none';
+                    hand.style.visibility = 'hidden';
+                    isTutorialActive = false;
+                }
+                console.log('All zones completed, tutorial finished');
             }
         }
 
@@ -1312,12 +1350,16 @@
             gameState.confirmedZones[zoneId] = variantIndex;
             gameState.totalObjectsChosen++; // Increment global counter
             
+            // Mark zone as completed
+            if (!gameState.completedZones.includes(zoneId)) {
+                gameState.completedZones.push(zoneId);
+            }
+            
             // Update the actual object in the scene
             replaceObject(zoneId, variantIndex); // Use the variantIndex directly
             
-            // Update hotspot appearance
-            const hotspot = document.getElementById(`hotspot-${zoneId}`);
-            // Hotspot is already hidden, so no need to change its appearance
+            // Hide the completed hotspot
+            hideCompletedHotspot(zoneId);
             
             // Disable select button and update text
             const selectButton = document.getElementById('selectButton');
