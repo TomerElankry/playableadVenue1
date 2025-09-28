@@ -232,7 +232,7 @@
     .catalog-item img {
         width: 100%; /* Full width to eliminate gaps */
         height: 70px; /* Increased height to expand thumbnail and eliminate strip */
-        object-fit: contain; /* Changed from cover to contain to show whole thumbnail */
+        object-fit: cover; /* Changed back to cover to spread thumbnails horizontally */
         object-position: center; /* Center the thumbnail within the frame */
         border-radius: 14px 14px 0 0; /* Match outer frame radius, only top corners rounded */
         margin: 0; /* No margins for seamless connection */
@@ -254,6 +254,12 @@
         height: 15px; /* Height of the fade effect */
         background: linear-gradient(to bottom, transparent, rgba(246, 209, 201, 0.3));
         pointer-events: none; /* Don't interfere with clicks */
+    }
+
+    /* Specific styling for chandelier catalog - zoom out to show whole photo */
+    .catalog[data-zone="chandelier"] .catalog-item img {
+        object-fit: contain; /* Show whole chandelier photo */
+        object-position: center; /* Center the chandelier within the frame */
     }
 
     .catalog-item-name {
@@ -1054,6 +1060,9 @@
             const catalog = document.getElementById('catalog');
             const catalogGrid = document.getElementById('catalogGrid');
             const selectButton = document.getElementById('selectButton');
+            
+            // Set data-zone attribute for specific styling
+            catalog.setAttribute('data-zone', zoneId);
             
             console.log('Catalog element:', catalog);
             console.log('Catalog grid element:', catalogGrid);
