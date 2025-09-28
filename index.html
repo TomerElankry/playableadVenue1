@@ -751,12 +751,12 @@
                     "view": "items/bed_frame/view/default",
                     "dot": {"x": -100, "y": 512},
                     "variants": [
-                        {"item": "items/bed_frame/item/1.png", "view": "items/bed_frame/view/1.png", "name": "Oak Platform"},
-                        {"item": "items/bed_frame/item/2.png", "view": "items/bed_frame/view/2.png", "name": "Metal Frame"},
-                        {"item": "items/bed_frame/item/3.png", "view": "items/bed_frame/view/3.png", "name": "Upholstered"},
-                        {"item": "items/bed_frame/item/4.png", "view": "items/bed_frame/view/4.png", "name": "Minimalist"},
-                        {"item": "items/bed_frame/item/5.png", "view": "items/bed_frame/view/5.png", "name": "Rustic Wood"},
-                        {"item": "items/bed_frame/item/6.png", "view": "items/bed_frame/view/6.png", "name": "Modern Steel"}
+                        {"item": "items/bed_frame/item/1.png", "view": "items/bed_frame/view/1.png", "name": "Coal Leather"},
+                        {"item": "items/bed_frame/item/2.png", "view": "items/bed_frame/view/2.png", "name": "Cloud Linen"},
+                        {"item": "items/bed_frame/item/3.png", "view": "items/bed_frame/view/3.png", "name": "Spring Grass Linen"},
+                        {"item": "items/bed_frame/item/4.png", "view": "items/bed_frame/view/4.png", "name": "Rose Velvet"},
+                        {"item": "items/bed_frame/item/5.png", "view": "items/bed_frame/view/5.png", "name": "Slate Velvet"},
+                        {"item": "items/bed_frame/item/6.png", "view": "items/bed_frame/view/6.png", "name": "Smokey Linen"}
                     ]
                 },
                 "bed_sheets": {
@@ -775,12 +775,12 @@
                     "view": "items/floor/view/default",
                     "dot": {"x": -250, "y": 550},
                     "variants": [
-                        {"item": "items/floor/item/1.png", "view": "items/floor/view/1.png", "name": "Oak Hardwood"},
+                        {"item": "items/floor/item/1.png", "view": "items/floor/view/1.png", "name": "Walnut"},
                         {"item": "items/floor/item/2.png", "view": "items/floor/view/2.png", "name": "Stone Tile"},
-                        {"item": "items/floor/item/3.png", "view": "items/floor/view/3.png", "name": "Bamboo"},
+                        {"item": "items/floor/item/3.png", "view": "items/floor/view/3.png", "name": "Stone Tile"},
                         {"item": "items/floor/item/4.png", "view": "items/floor/view/4.png", "name": "Marble"},
                         {"item": "items/floor/item/5.png", "view": "items/floor/view/5.png", "name": "Pine Wood"},
-                        {"item": "items/floor/item/6.png", "view": "items/floor/view/6.png", "name": "Ceramic"}
+                        {"item": "items/floor/item/6.png", "view": "items/floor/view/6.png", "name": "Ceramics"}
                     ]
                 },
                 "walls": {
@@ -931,7 +931,22 @@
                 }, 
                 viewPath: (i) => `assets/items/chandelier/view/${i}.png?v=${new Date().getTime()}` 
             },
-            'bed_frame': { name: 'Bed Frame', itemCount: 6, thumbPath: (i) => `assets/thumbs/bed_frame/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/bed_frame/view/${i}.png?v=${new Date().getTime()}` },
+            'bed_frame': { 
+                name: 'Bed Frame', 
+                itemCount: 6, 
+                thumbPath: (i) => {
+                    const thumbnails = [
+                        'coal leather.jpg',
+                        'cloadLinenThumbnails.jpg', 
+                        'Spring Grass Linen thumbnail.jpg',
+                        'roseVelvetThumbnail.jpg',
+                        'slateVelvetThumbnail.jpg',
+                        'smokeyLinenThumbnail.jpg'
+                    ];
+                    return `assets/thumbs/bed_frame/${thumbnails[i-1]}?v=${new Date().getTime()}`;
+                }, 
+                viewPath: (i) => `assets/items/bed_frame/view/${i}.png?v=${new Date().getTime()}` 
+            },
             'bed_sheets': { 
                 name: 'Bed Sheets', 
                 itemCount: 6, 
