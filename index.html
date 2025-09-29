@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Cabin Design - Playable Ad</title>
@@ -6,6 +6,7 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style type="text/css">
     html, body {
@@ -16,7 +17,7 @@
         width: 100%;
         height: 100%;
         position: fixed;
-        font-family: Arial, sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         display: flex;
         flex-direction: column;
     }
@@ -261,6 +262,8 @@
         object-fit: contain; /* Show whole chandelier photo */
         object-position: center; /* Center the chandelier within the frame */
     }
+
+    
 
     .catalog-item-name {
         margin: 0;
@@ -776,22 +779,22 @@
                     "dot": {"x": -250, "y": 550},
                     "variants": [
                         {"item": "items/floor/item/1.png", "view": "items/floor/view/1.png", "name": "Walnut"},
-                        {"item": "items/floor/item/2.png", "view": "items/floor/view/2.png", "name": "Stone Tile"},
+                        {"item": "items/floor/item/2.png", "view": "items/floor/view/2.png", "name": "Pine Wood"},
                         {"item": "items/floor/item/3.png", "view": "items/floor/view/3.png", "name": "Stone Tile"},
-                        {"item": "items/floor/item/4.png", "view": "items/floor/view/4.png", "name": "Marble"},
-                        {"item": "items/floor/item/5.png", "view": "items/floor/view/5.png", "name": "Pine Wood"},
+                        {"item": "items/floor/item/4.png", "view": "items/floor/view/4.png", "name": "Reclaimed Wood"},
+                        {"item": "items/floor/item/5.png", "view": "items/floor/view/5.png", "name": "Oak Hardwood"},
                         {"item": "items/floor/item/6.png", "view": "items/floor/view/6.png", "name": "Ceramics"}
                     ]
                 },
                 "walls": {
                     "dot": {"x": 120, "y": 250},
                     "variants": [
-                        {"item": "items/walls/wall1-optimized.png", "view": "items/walls/wall1-optimized.png", "name": "Oak Panels"},
-                        {"item": "items/walls/wall2-optimized.png", "view": "items/walls/wall2-optimized.png", "name": "Floating White"},
-                        {"item": "items/walls/wall3-optimized.png", "view": "items/walls/wall3-optimized.png", "name": "Industrial Pipe"},
-                        {"item": "items/walls/wall4-optimized.png", "view": "items/walls/wall4-optimized.png", "name": "Minimalist Black"},
-                        {"item": "items/walls/wall5-optimized.png", "view": "items/walls/wall5-optimized.png", "name": "Rustic Wood"},
-                        {"item": "items/walls/wall6-optimized.png", "view": "items/walls/wall6-optimized.png", "name": "Glass & Steel"}
+                        {"item": "items/walls/wall2-optimized.png", "view": "items/walls/wall2-optimized.png", "name": "Taupe Wood"},
+                        {"item": "items/walls/flowersNewOption.png", "view": "items/walls/flowersNewOption.png", "name": "Newbury Wallpaper"},
+                        {"item": "items/walls/wall3-optimized.png", "view": "items/walls/wall3-optimized.png", "name": "Wood Grain"},
+                        {"item": "items/walls/wall4-optimized.png", "view": "items/walls/wall4-optimized.png", "name": "Botanical Taupe"},
+                        {"item": "items/walls/wall5-optimized.png", "view": "items/walls/wall5-optimized.png", "name": "Stone Grey"},
+                        {"item": "items/walls/wall6-optimized.png", "view": "items/walls/wall6-optimized.png", "name": "Pastel Green-Gray"}
                     ]
                 }
             },
@@ -885,6 +888,44 @@
 
         let isTutorialActive = true;
         let tutorialInterval = null;
+        let inactivityTimerId = null;
+        const INACTIVITY_MS = 6000;
+        let stopTutorialTimeoutId = null; // Manages the timeout for hiding the hand
+
+        function isWindowsCompleted() {
+            return isZoneCompleted('windows');
+        }
+
+        function scheduleInactivityHand() {
+            if (!isWindowsCompleted()) return; // Only after Windows is confirmed
+            if (inactivityTimerId) clearTimeout(inactivityTimerId);
+            inactivityTimerId = setTimeout(() => {
+                // If catalog is visible, point within the current catalog instead of hotspot
+                const catalog = document.getElementById('catalog');
+                const isCatalogVisible = catalog && getComputedStyle(catalog).visibility === 'visible' && getComputedStyle(catalog).opacity !== '0';
+                if (isCatalogVisible && gameState.currentZone) {
+                    const z = gameState.currentZone;
+                    if (z === 'windows') startWindowsTutorial();
+                    else if (z === 'chandelier') startChandelierTutorial();
+                    else if (z === 'bed_frame') startBedFrameTutorial();
+                    else if (z === 'bed_sheets') startBedSheetsTutorial();
+                    else if (z === 'floor') startFloorTutorial();
+                    else if (z === 'walls') startWallsTutorial();
+                    return;
+                }
+                const nextZone = getNextRecommendedZone();
+                if (nextZone) startHotspotTutorial(nextZone);
+            }, INACTIVITY_MS);
+        }
+
+        function resetInactivityTimer() {
+            if (inactivityTimerId) clearTimeout(inactivityTimerId);
+            // Hide hand on interaction
+            if (isTutorialActive) {
+                try { stopTutorial(); } catch (e) {}
+            }
+            scheduleInactivityHand();
+        }
         let isMobileDevice = false;
 
         // Function to get the next recommended zone (in original order)
@@ -963,8 +1004,56 @@
                 }, 
                 viewPath: (i) => `assets/items/bed_sheets/view/${i}.png?v=${new Date().getTime()}` 
             },
-            'floor': { name: 'Floor', itemCount: 6, thumbPath: (i) => `assets/thumbs/floor/${i}.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/floor/view/${i}.png?v=${new Date().getTime()}` },
-            'walls': { name: 'Walls', itemCount: 6, thumbPath: (i) => `assets/items/walls/wall${i}-optimized.png?v=${new Date().getTime()}`, viewPath: (i) => `assets/items/walls/wall${i}-optimized.png?v=${new Date().getTime()}` },
+            'floor': { 
+                name: 'Floor', 
+                itemCount: 6, 
+                thumbPath: (i) => {
+                    const thumbnails = [
+                        'walnutThumbnails.jpg',
+                        'pinewoodThumbnails.jpg', 
+                        'stoneTileThumbnails.jpg',
+                        'reclaimed woodThumbnails.jpg',
+                        'oakHardwoodThumbnails.jpg',
+                        'ceramicsThumbnails.jpg'
+                    ];
+                    return `assets/thumbs/floor/${thumbnails[i-1]}?v=${new Date().getTime()}`;
+                }, 
+                viewPath: (i) => `assets/items/floor/view/${i}.png?v=${new Date().getTime()}` 
+            },
+            'walls': { 
+                name: 'Walls', 
+                itemCount: 6, 
+                thumbPath: (i) => {
+                    if (i === 1) {
+                        return `assets/thumbs/walls/taupe woodthumbs.jpg?v=${new Date().getTime()}`;
+                    }
+                    if (i === 2) {
+                        return `assets/thumbs/walls/Newbury Wallpaperthumbs.jpg?v=${new Date().getTime()}`;
+                    }
+                    if (i === 3) {
+                        return `assets/thumbs/walls/wood grain thumbs.jpg?v=${new Date().getTime()}`;
+                    }
+                    if (i === 4) {
+                        return `assets/thumbs/walls/Botanical Taupethumbs.jpg?v=${new Date().getTime()}`;
+                    }
+                    if (i === 6) {
+                        return `assets/thumbs/walls/pastel green-graythumbs.jpg?v=${new Date().getTime()}`;
+                    }
+                    if (i === 5) {
+                        return `assets/thumbs/walls/stonegreythumbs.jpg?v=${new Date().getTime()}`;
+                    }
+                    return `assets/items/walls/wall${i}-optimized.png?v=${new Date().getTime()}`;
+                }, 
+                viewPath: (i) => {
+                    if (i === 1) {
+                        return `assets/items/walls/wall2-optimized.png?v=${new Date().getTime()}`;
+                    }
+                    if (i === 2) {
+                        return `assets/items/walls/flowersNewOption.png?v=${new Date().getTime()}`;
+                    }
+                    return `assets/items/walls/wall${i}-optimized.png?v=${new Date().getTime()}`;
+                }
+            },
         };
         
         // Function to detect if the user is on a mobile device
@@ -1010,6 +1099,8 @@
                 if (firstRecommendedZone) {
                     startHotspotTutorial(firstRecommendedZone);
                 }
+                // Begin inactivity monitoring (hand only after windows is confirmed)
+                scheduleInactivityHand();
             }, 800);
         }
         
@@ -1063,14 +1154,25 @@
         function openCatalog(zoneId) {
             console.log('Opening catalog for zone:', zoneId);
             
-            // Fade out the hotspot
-            const hotspot = document.getElementById(`hotspot-${zoneId}`);
-            if (hotspot) {
-                hotspot.style.opacity = '0';
-                hotspot.style.pointerEvents = 'none';
+            // If another hotspot was previously opened but not completed, fade it back in
+            const previousZone = gameState.currentZone;
+            if (previousZone && previousZone !== zoneId && !isZoneCompleted(previousZone)) {
+                // Revert preview for previous zone since selection was not confirmed
+                revertPreview(previousZone);
+                const prevHotspot = document.getElementById(`hotspot-${previousZone}`);
+                if (prevHotspot) {
+                    prevHotspot.style.opacity = '1';
+                    prevHotspot.style.pointerEvents = 'auto';
+                }
             }
 
+            // Set current zone and fade out the newly opened hotspot (so it won't disturb preview)
             gameState.currentZone = zoneId;
+            const activeHotspot = document.getElementById(`hotspot-${zoneId}`);
+            if (activeHotspot) {
+                activeHotspot.style.opacity = '0';
+                activeHotspot.style.pointerEvents = 'none';
+            }
             const zoneConfig = CONFIG.application.zonesConfig[zoneId];
             const catalog = document.getElementById('catalog');
             const catalogGrid = document.getElementById('catalogGrid');
@@ -1101,16 +1203,16 @@
                 
                 // Click handler for preview
                 item.addEventListener('click', function() {
+                    console.log('[catalog item click] zone=', zoneId, ' variant=', i);
                     // Remove intro container immediately on any catalog item click
                     const introContainer = document.getElementById('introContainer');
                     if (introContainer) {
                         introContainer.parentNode.removeChild(introContainer);
                     }
                     
-                    // Stop tutorial hand on first click
-                    if (isTutorialActive) {
-                        stopTutorial();
-                    }
+                    // Stop any current hand, then point at Select button
+                    if (isTutorialActive) { try { stopTutorial(); } catch(e) {} }
+                    startSelectButtonTutorial();
                     
                     // Preview the variant
                     previewVariant(i);
@@ -1162,24 +1264,44 @@
                 setTimeout(startWindowsTutorial, 600); // Increased delay to ensure catalog is visible
             } else if (zoneId === 'chandelier') {
                 // Reset tutorial state for chandelier catalog
-                isTutorialActive = true;
-                setTimeout(startChandelierTutorial, 600); // Start chandelier catalog tutorial
+                if (!isWindowsCompleted()) {
+                    isTutorialActive = true;
+                    setTimeout(startChandelierTutorial, 600); // Start chandelier catalog tutorial
+                } else {
+                    resetInactivityTimer();
+                }
             } else if (zoneId === 'bed_frame') {
                 // Reset tutorial state for bed_frame catalog
-                isTutorialActive = true;
-                setTimeout(startBedFrameTutorial, 600); // Start bed_frame catalog tutorial
+                if (!isWindowsCompleted()) {
+                    isTutorialActive = true;
+                    setTimeout(startBedFrameTutorial, 600); // Start bed_frame catalog tutorial
+                } else {
+                    resetInactivityTimer();
+                }
             } else if (zoneId === 'bed_sheets') {
                 // Reset tutorial state for bed_sheets catalog
-                isTutorialActive = true;
-                setTimeout(startBedSheetsTutorial, 600); // Start bed_sheets catalog tutorial
+                if (!isWindowsCompleted()) {
+                    isTutorialActive = true;
+                    setTimeout(startBedSheetsTutorial, 600); // Start bed_sheets catalog tutorial
+                } else {
+                    resetInactivityTimer();
+                }
             } else if (zoneId === 'floor') {
                 // Reset tutorial state for floor catalog
-                isTutorialActive = true;
-                setTimeout(startFloorTutorial, 600); // Start floor catalog tutorial
+                if (!isWindowsCompleted()) {
+                    isTutorialActive = true;
+                    setTimeout(startFloorTutorial, 600); // Start floor catalog tutorial
+                } else {
+                    resetInactivityTimer();
+                }
             } else if (zoneId === 'walls') {
                 // Reset tutorial state for walls catalog
-                isTutorialActive = true;
-                setTimeout(startWallsTutorial, 600); // Start walls catalog tutorial
+                if (!isWindowsCompleted()) {
+                    isTutorialActive = true;
+                    setTimeout(startWallsTutorial, 600); // Start walls catalog tutorial
+                } else {
+                    resetInactivityTimer();
+                }
             }
         }
         
@@ -1199,13 +1321,50 @@
             replaceObject(zoneId, variantIndex);
         }
 
-        function revertPreview() {
-            const zoneId = gameState.currentZone;
-            // In the new flow, if a choice has been made, it's permanent.
-            // So we only revert if nothing has been confirmed for this zone yet.
-            const lastConfirmedVariant = gameState.confirmedZones[zoneId];
+        function startSelectButtonTutorial() {
+            const hand = document.getElementById('tutorialHand');
+            const selectButton = document.getElementById('selectButton');
+            const catalog = document.getElementById('catalog');
+            if (!hand || !selectButton || !catalog) return;
+            console.log('[select hand] starting');
+            if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
 
-            if (lastConfirmedVariant === undefined) {
+            // Delay to ensure layout settles before computing position
+            setTimeout(() => {
+                const btnRect = selectButton.getBoundingClientRect();
+                console.log('[select hand] btnRect=', btnRect);
+
+                hand.style.display = 'block';
+                hand.style.visibility = 'visible';
+                hand.style.position = 'fixed'; // position relative to viewport to avoid container offsets
+                hand.style.zIndex = '10000';
+                // Remove animation that might be conflicting with rotation
+                hand.style.animation = 'none';
+                // Set rotation directly via setAttribute to ensure it takes precedence
+                hand.setAttribute('style', hand.getAttribute('style') + 'transform: rotate(30deg) !important;');
+                hand.style.transition = 'opacity 0.2s ease-in-out';
+                hand.style.opacity = '0';
+
+                const estimatedHandH = hand.offsetHeight || 60;
+                const topPos = btnRect.top + (btnRect.height / 2) - (estimatedHandH / 2);
+                const leftPos = btnRect.left - hand.offsetWidth - 12;
+                hand.style.top = `${topPos}px`;
+                hand.style.left = `${leftPos}px`;
+
+                requestAnimationFrame(() => { hand.style.opacity = '1'; });
+                isTutorialActive = true;
+                suppressNextStop = true;
+            }, 150);
+        }
+
+        function revertPreview(zoneId) {
+            if (!zoneId) return;
+            const lastConfirmedVariant = gameState.confirmedZones[zoneId];
+            if (lastConfirmedVariant !== undefined) {
+                // Restore the last confirmed variant for this zone
+                replaceObject(zoneId, lastConfirmedVariant);
+            } else {
+                // No confirmed choice yet: hide this zone's object layer
                 const objectLayer = document.getElementById(`layer-${zoneId}`);
                 if (objectLayer) objectLayer.style.display = 'none';
             }
@@ -1311,6 +1470,12 @@
                 return;
             }
 
+            if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
+
+            hand.style.opacity = '0'; // Start transparent for fade-in
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+
             // Position hand to point at the hotspot
             const updateHandPosition = () => {
                 const hotspotRect = hotspot.getBoundingClientRect();
@@ -1327,27 +1492,14 @@
             };
             
             // Show the hand with specific rotation
-            hand.style.display = 'block';
-            hand.style.visibility = 'visible';
-            hand.style.position = 'absolute';
-            hand.style.zIndex = '1000';
             hand.style.transform = 'rotate(-15deg)'; // Specific rotation for hotspot tutorial
             hand.style.animation = 'hand-float-windows 1s ease-in-out infinite alternate';
-            hand.style.transition = 'opacity 0.8s ease-in-out';
-            hand.style.opacity = '0';
-            
-            // Fade in smoothly
-            setTimeout(() => {
-                hand.style.opacity = '1';
-            }, 50);
-            
+
             updateHandPosition();
-            
-            // Update position on window resize
-            window.addEventListener('resize', updateHandPosition);
-            
-            // Store the resize handler so we can remove it later
+            requestAnimationFrame(() => { hand.style.opacity = '1'; });
+
             hand._resizeHandler = updateHandPosition;
+            window.addEventListener('resize', hand._resizeHandler);
             
             // Stop tutorial when user clicks on hotspot
             const stopTutorial = () => {
@@ -1393,8 +1545,15 @@
             
             closeCatalog();
             
-            // Start tutorial for next hotspot
-            startNextTutorial();
+            // Start tutorial for next hotspot; after windows completion switch to inactivity mode
+            if (zoneId === 'windows') {
+                startNextTutorial();
+                scheduleInactivityHand();
+            } else if (!isWindowsCompleted()) {
+                startNextTutorial();
+            } else {
+                resetInactivityTimer();
+            }
             
             // Check if all zones are confirmed
             const totalZones = CONFIG.application.zones.length;
@@ -1435,6 +1594,7 @@
             });
 
             const imagePath = objectData.viewPath(variantNumber);
+            console.log(`[replaceObject] zone=${zoneId} variant=${variantNumber} path=${imagePath}`);
 
             // Preload target image to avoid flicker during transition
             const preload = new Image();
@@ -1533,6 +1693,7 @@
         function closeCatalog() {
             const catalog = document.getElementById('catalog');
             const selectButton = document.getElementById('selectButton');
+            // Do not auto-restore hotspot here. We handle restore in openCatalog when switching zones.
             
             // Add fade out animation
             catalog.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out, visibility 0.5s ease-out';
@@ -1572,6 +1733,7 @@
             const items = catalog.querySelectorAll('.catalog-item');
 
             if (!hand || items.length < 3) { return; }
+            if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
 
             // Show the hand with specific rotation for catalog tutorial
             hand.style.display = 'block';
@@ -1615,55 +1777,20 @@
         }
 
         function startChandelierTutorial() {
-            console.log('=== STARTING CHANDELIER TUTORIAL ===');
-            console.log('isTutorialActive:', isTutorialActive);
-            
             const hand = document.getElementById('tutorialHand');
             const catalog = document.getElementById('catalog');
             const items = catalog.querySelectorAll('.catalog-item');
+            if (!hand || items.length === 0) return;
+            if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
 
-            console.log('Starting chandelier tutorial...');
-            console.log('Hand element:', hand);
-            console.log('Catalog element:', catalog);
-            console.log('Items found:', items.length);
-
-            if (!hand || items.length < 3) { 
-                console.error('Missing elements for chandelier tutorial');
-                return; 
-            }
-
-            // Show the hand with specific rotation for catalog tutorial
-            hand.style.display = 'block';
-            hand.style.visibility = 'visible';
-            hand.style.position = 'absolute';
-            hand.style.zIndex = '1000';
-            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
-            hand.style.transition = 'opacity 0.8s ease-in-out';
-            hand.style.opacity = '0';
-            
-            // Fade in smoothly
-            setTimeout(() => {
-                hand.style.opacity = '1';
-                console.log('Hand faded in, opacity set to 1');
-                
-                // Hand fades in without highlighting any option
-                console.log('Hand faded in, no automatic highlighting');
-            }, 50);
-
-            // Point only to the left top option (index 0)
-            const leftTopItem = items[0];
-            if (!leftTopItem) {
-                console.error('Left top item not found');
-                return;
-            }
-
-            const itemRect = leftTopItem.getBoundingClientRect();
-            const catalogRect = catalog.getBoundingClientRect();
+            // Point to the top-left option (index 0)
+            const targetItem = items[0];
+            const itemRect = targetItem.getBoundingClientRect();
 
             console.log('Item rect:', itemRect);
-            console.log('Catalog rect:', catalogRect);
+            console.log('Catalog rect:', catalog.getBoundingClientRect());
 
-            // Position hand to point at the left top item
+            // Position hand to point at the top-left item
             // Use simpler positioning relative to the catalog
             const itemIndex = 0; // Left top item (first item in first row)
             const itemsPerRow = 3;
@@ -1671,7 +1798,7 @@
             const col = itemIndex % itemsPerRow;
             
             // Calculate position based on grid layout
-            const itemWidth = catalogRect.width / itemsPerRow;
+            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
             const itemHeight = 120; // Approximate item height
             const itemX = col * itemWidth + (itemWidth / 2);
             const itemY = row * itemHeight + (itemHeight / 2);
@@ -1700,55 +1827,20 @@
         }
 
         function startBedFrameTutorial() {
-            console.log('=== STARTING BED_FRAME TUTORIAL ===');
-            console.log('isTutorialActive:', isTutorialActive);
-            
             const hand = document.getElementById('tutorialHand');
             const catalog = document.getElementById('catalog');
             const items = catalog.querySelectorAll('.catalog-item');
+            if (!hand || items.length < 3) return;
+            if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
 
-            console.log('Starting bed_frame tutorial...');
-            console.log('Hand element:', hand);
-            console.log('Catalog element:', catalog);
-            console.log('Items found:', items.length);
-
-            if (!hand || items.length < 3) { 
-                console.error('Missing elements for bed_frame tutorial');
-                return; 
-            }
-
-            // Show the hand with specific rotation for catalog tutorial
-            hand.style.display = 'block';
-            hand.style.visibility = 'visible';
-            hand.style.position = 'absolute';
-            hand.style.zIndex = '1000';
-            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
-            hand.style.transition = 'opacity 0.8s ease-in-out';
-            hand.style.opacity = '0';
-            
-            // Fade in smoothly
-            setTimeout(() => {
-                hand.style.opacity = '1';
-                console.log('Hand faded in, opacity set to 1');
-                
-                // Hand fades in without highlighting any option
-                console.log('Hand faded in, no automatic highlighting');
-            }, 50);
-
-            // Point only to the top right option (index 2)
-            const topRightItem = items[2];
-            if (!topRightItem) {
-                console.error('Top right item not found');
-                return;
-            }
-
-            const itemRect = topRightItem.getBoundingClientRect();
-            const catalogRect = catalog.getBoundingClientRect();
+            // Point to the top-right option (index 2)
+            const targetItem = items[2];
+            const itemRect = targetItem.getBoundingClientRect();
 
             console.log('Item rect:', itemRect);
-            console.log('Catalog rect:', catalogRect);
+            console.log('Catalog rect:', catalog.getBoundingClientRect());
 
-            // Position hand to point at the top right item
+            // Position hand to point at the top-right item
             // Use simpler positioning relative to the catalog
             const itemIndex = 2; // Top right item (third item in first row)
             const itemsPerRow = 3;
@@ -1756,7 +1848,7 @@
             const col = itemIndex % itemsPerRow;
             
             // Calculate position based on grid layout
-            const itemWidth = catalogRect.width / itemsPerRow;
+            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
             const itemHeight = 120; // Approximate item height
             const itemX = col * itemWidth + (itemWidth / 2);
             const itemY = row * itemHeight + (itemHeight / 2);
@@ -1785,55 +1877,20 @@
         }
 
         function startBedSheetsTutorial() {
-            console.log('=== STARTING BED_SHEETS TUTORIAL ===');
-            console.log('isTutorialActive:', isTutorialActive);
-            
             const hand = document.getElementById('tutorialHand');
             const catalog = document.getElementById('catalog');
             const items = catalog.querySelectorAll('.catalog-item');
+            if (!hand || items.length < 4) return;
+            if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
 
-            console.log('Starting bed_sheets tutorial...');
-            console.log('Hand element:', hand);
-            console.log('Catalog element:', catalog);
-            console.log('Items found:', items.length);
-
-            if (!hand || items.length < 3) { 
-                console.error('Missing elements for bed_sheets tutorial');
-                return; 
-            }
-
-            // Show the hand with specific rotation for catalog tutorial
-            hand.style.display = 'block';
-            hand.style.visibility = 'visible';
-            hand.style.position = 'absolute';
-            hand.style.zIndex = '1000';
-            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
-            hand.style.transition = 'opacity 0.8s ease-in-out';
-            hand.style.opacity = '0';
-            
-            // Fade in smoothly
-            setTimeout(() => {
-                hand.style.opacity = '1';
-                console.log('Hand faded in, opacity set to 1');
-                
-                // Hand fades in without highlighting any option
-                console.log('Hand faded in, no automatic highlighting');
-            }, 50);
-
-            // Point only to the bottom left option (index 3)
-            const bottomLeftItem = items[3];
-            if (!bottomLeftItem) {
-                console.error('Bottom left item not found');
-                return;
-            }
-
-            const itemRect = bottomLeftItem.getBoundingClientRect();
-            const catalogRect = catalog.getBoundingClientRect();
+            // Point to the bottom-left option (index 3)
+            const targetItem = items[3];
+            const itemRect = targetItem.getBoundingClientRect();
 
             console.log('Item rect:', itemRect);
-            console.log('Catalog rect:', catalogRect);
+            console.log('Catalog rect:', catalog.getBoundingClientRect());
 
-            // Position hand to point at the bottom left item
+            // Position hand to point at the bottom-left item
             // Use simpler positioning relative to the catalog
             const itemIndex = 3; // Bottom left item (first item in second row)
             const itemsPerRow = 3;
@@ -1841,7 +1898,7 @@
             const col = itemIndex % itemsPerRow;
             
             // Calculate position based on grid layout
-            const itemWidth = catalogRect.width / itemsPerRow;
+            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
             const itemHeight = 120; // Approximate item height
             const itemX = col * itemWidth + (itemWidth / 2);
             const itemY = row * itemHeight + (itemHeight / 2);
@@ -1870,55 +1927,20 @@
         }
 
         function startFloorTutorial() {
-            console.log('=== STARTING FLOOR TUTORIAL ===');
-            console.log('isTutorialActive:', isTutorialActive);
-            
             const hand = document.getElementById('tutorialHand');
             const catalog = document.getElementById('catalog');
             const items = catalog.querySelectorAll('.catalog-item');
+            if (!hand || items.length < 5) return;
+            if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
 
-            console.log('Starting floor tutorial...');
-            console.log('Hand element:', hand);
-            console.log('Catalog element:', catalog);
-            console.log('Items found:', items.length);
-
-            if (!hand || items.length < 3) { 
-                console.error('Missing elements for floor tutorial');
-                return; 
-            }
-
-            // Show the hand with specific rotation for catalog tutorial
-            hand.style.display = 'block';
-            hand.style.visibility = 'visible';
-            hand.style.position = 'absolute';
-            hand.style.zIndex = '1000';
-            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
-            hand.style.transition = 'opacity 0.8s ease-in-out';
-            hand.style.opacity = '0';
-            
-            // Fade in smoothly
-            setTimeout(() => {
-                hand.style.opacity = '1';
-                console.log('Hand faded in, opacity set to 1');
-                
-                // Hand fades in without highlighting any option
-                console.log('Hand faded in, no automatic highlighting');
-            }, 50);
-
-            // Point only to the bottom middle option (index 4)
-            const bottomMiddleItem = items[4];
-            if (!bottomMiddleItem) {
-                console.error('Bottom middle item not found');
-                return;
-            }
-
-            const itemRect = bottomMiddleItem.getBoundingClientRect();
-            const catalogRect = catalog.getBoundingClientRect();
+            // Point to the bottom-middle option (index 4)
+            const targetItem = items[4];
+            const itemRect = targetItem.getBoundingClientRect();
 
             console.log('Item rect:', itemRect);
-            console.log('Catalog rect:', catalogRect);
+            console.log('Catalog rect:', catalog.getBoundingClientRect());
 
-            // Position hand to point at the bottom middle item
+            // Position hand to point at the bottom-middle item
             // Use simpler positioning relative to the catalog
             const itemIndex = 4; // Bottom middle item (second item in second row)
             const itemsPerRow = 3;
@@ -1926,7 +1948,7 @@
             const col = itemIndex % itemsPerRow;
             
             // Calculate position based on grid layout
-            const itemWidth = catalogRect.width / itemsPerRow;
+            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
             const itemHeight = 120; // Approximate item height
             const itemX = col * itemWidth + (itemWidth / 2);
             const itemY = row * itemHeight + (itemHeight / 2);
@@ -1955,55 +1977,20 @@
         }
 
         function startWallsTutorial() {
-            console.log('=== STARTING WALLS TUTORIAL ===');
-            console.log('isTutorialActive:', isTutorialActive);
-            
             const hand = document.getElementById('tutorialHand');
             const catalog = document.getElementById('catalog');
             const items = catalog.querySelectorAll('.catalog-item');
+            if (!hand || items.length < 6) return;
+            if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
 
-            console.log('Starting walls tutorial...');
-            console.log('Hand element:', hand);
-            console.log('Catalog element:', catalog);
-            console.log('Items found:', items.length);
-
-            if (!hand || items.length < 3) { 
-                console.error('Missing elements for walls tutorial');
-                return; 
-            }
-
-            // Show the hand with specific rotation for catalog tutorial
-            hand.style.display = 'block';
-            hand.style.visibility = 'visible';
-            hand.style.position = 'absolute';
-            hand.style.zIndex = '1000';
-            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
-            hand.style.transition = 'opacity 0.8s ease-in-out';
-            hand.style.opacity = '0';
-            
-            // Fade in smoothly
-            setTimeout(() => {
-                hand.style.opacity = '1';
-                console.log('Hand faded in, opacity set to 1');
-                
-                // Hand fades in without highlighting any option
-                console.log('Hand faded in, no automatic highlighting');
-            }, 50);
-
-            // Point only to the bottom right option (index 5)
-            const bottomRightItem = items[5];
-            if (!bottomRightItem) {
-                console.error('Bottom right item not found');
-                return;
-            }
-
-            const itemRect = bottomRightItem.getBoundingClientRect();
-            const catalogRect = catalog.getBoundingClientRect();
+            // Point to the bottom-right option (index 5)
+            const targetItem = items[5];
+            const itemRect = targetItem.getBoundingClientRect();
 
             console.log('Item rect:', itemRect);
-            console.log('Catalog rect:', catalogRect);
+            console.log('Catalog rect:', catalog.getBoundingClientRect());
 
-            // Position hand to point at the bottom right item
+            // Position hand to point at the bottom-right item
             // Use simpler positioning relative to the catalog
             const itemIndex = 5; // Bottom right item (third item in second row)
             const itemsPerRow = 3;
@@ -2011,7 +1998,7 @@
             const col = itemIndex % itemsPerRow;
             
             // Calculate position based on grid layout
-            const itemWidth = catalogRect.width / itemsPerRow;
+            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
             const itemHeight = 120; // Approximate item height
             const itemX = col * itemWidth + (itemWidth / 2);
             const itemY = row * itemHeight + (itemHeight / 2);
@@ -2050,8 +2037,9 @@
             
             const hand = document.getElementById('tutorialHand');
             if (hand) {
+                if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
                 hand.style.opacity = '0';
-                setTimeout(() => {
+                stopTutorialTimeoutId = setTimeout(() => {
                     hand.style.display = 'none';
                 }, 300);
             }
@@ -2064,40 +2052,21 @@
         function startStartButtonTutorial() {
             const hand = document.getElementById('tutorialHand');
             const startButton = document.getElementById('startButton');
-            
-            console.log('Starting start button tutorial...');
-            console.log('Hand element:', hand);
-            console.log('Start button element:', startButton);
-            
-            if (!hand || !startButton) {
-                console.error('Missing elements - hand:', hand, 'startButton:', startButton);
-                return;
-            }
+            if (!hand || !startButton) return;
 
-            hand.style.display = 'block';
-            hand.style.visibility = 'visible';
-            hand.style.position = 'absolute';
-            hand.style.zIndex = '1000';
-            hand.style.transition = 'opacity 0.8s ease-in-out';
-            hand.style.opacity = '0';
-            
-            // Fade in smoothly
-            setTimeout(() => {
-                hand.style.opacity = '1';
-            }, 50);
-            
-            // Position hand to point at the start button from below
+            if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
+
             const updateHandPosition = () => {
-                const buttonRect = startButton.getBoundingClientRect();
+                const btnRect = startButton.getBoundingClientRect();
                 const bottomSection = document.querySelector('.bottom-section');
                 const containerRect = bottomSection.getBoundingClientRect();
                 
-                console.log('Button rect:', buttonRect);
+                console.log('Button rect:', btnRect);
                 console.log('Container rect:', containerRect);
                 
                 // Position hand below and to the left of the button
-                const topPos = buttonRect.bottom - containerRect.top - 80; // 20px higher up
-                const leftPos = buttonRect.left - containerRect.left + 130; // 30px to the left of the button
+                const topPos = btnRect.bottom - containerRect.top - 80; // 20px higher up
+                const leftPos = btnRect.left - containerRect.left + 130; // 30px to the left of the button
                 
                 hand.style.top = `${topPos}px`;
                 hand.style.left = `${leftPos}px`;
@@ -2118,8 +2087,9 @@
         function stopStartButtonTutorial() {
             const hand = document.getElementById('tutorialHand');
             if (hand) {
+                if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
                 hand.style.opacity = '0';
-                setTimeout(() => {
+                stopTutorialTimeoutId = setTimeout(() => {
                     hand.style.display = 'none';
                 }, 300);
                 
