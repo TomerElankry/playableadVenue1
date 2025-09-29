@@ -1178,6 +1178,8 @@
         }
         
         function openCatalog(zoneId) {
+            // Defensive: hide any currently visible tutorial hand when a catalog opens
+            try { if (isTutorialActive) stopTutorial(); } catch (e) {}
             console.log('Opening catalog for zone:', zoneId);
             
             // If another hotspot was previously opened but not completed, fade it back in
@@ -1236,10 +1238,13 @@
                         introContainer.parentNode.removeChild(introContainer);
                     }
                     
-                    // For windows, point immediately; other zones defer to inactivity timer
+                    // For windows, point immediately; for non-windows, stop option hand and start 6s-to-Select
                     if (zoneId === 'windows') {
                         startSelectButtonTutorial();
                     } else {
+                        // Hide any option hint hand and schedule Select hint after inactivity
+                        try { stopTutorial(); } catch (e) {}
+                        catalogHintStage = 'select';
                         resetInactivityTimer();
                     }
                     
@@ -1497,6 +1502,7 @@
 
             updateHandPosition();
             requestAnimationFrame(() => { hand.style.opacity = '1'; });
+            isTutorialActive = true;
 
             hand._resizeHandler = updateHandPosition;
             window.addEventListener('resize', hand._resizeHandler);
@@ -1781,35 +1787,22 @@
             // Point to the top-left option (index 0)
             const targetItem = items[0];
             const itemRect = targetItem.getBoundingClientRect();
-
-            console.log('Item rect:', itemRect);
-            console.log('Catalog rect:', catalog.getBoundingClientRect());
+            const catalogRect = catalog.getBoundingClientRect();
 
             // Position hand to point at the top-left item
-            // Use simpler positioning relative to the catalog
-            const itemIndex = 0; // Left top item (first item in first row)
-            const itemsPerRow = 3;
-            const row = Math.floor(itemIndex / itemsPerRow);
-            const col = itemIndex % itemsPerRow;
-            
-            // Calculate position based on grid layout
-            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
-            const itemHeight = 120; // Approximate item height
-            const itemX = col * itemWidth + (itemWidth / 2);
-            const itemY = row * itemHeight + (itemHeight / 2);
-            
-            // Position hand to the left of the item
-            const handX = itemX - 60; // 60px to the left of item center
-            const handY = itemY - 20; // 20px above item center
-            
-            hand.style.left = `${handX}px`;
-            hand.style.top = `${handY}px`;
-            
-            console.log('Hand positioned at:', handX, handY);
-            console.log('Item position:', itemX, itemY);
-            console.log('Hand dimensions:', hand.offsetWidth, hand.offsetHeight);
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            hand.style.transform = 'rotate(35deg)';
+            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
 
-            // Keep the hand visible while the user previews options; do not stop on item click
+            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+
+            requestAnimationFrame(() => { hand.style.opacity = '1'; });
         }
 
         function startBedFrameTutorial() {
@@ -1822,29 +1815,24 @@
             // Point to the top-right option (index 2)
             const targetItem = items[2];
             const itemRect = targetItem.getBoundingClientRect();
+            const catalogRect = catalog.getBoundingClientRect();
 
             console.log('Item rect:', itemRect);
             console.log('Catalog rect:', catalog.getBoundingClientRect());
 
-            // Position hand to point at the top-right item
-            // Use simpler positioning relative to the catalog
-            const itemIndex = 2; // Top right item (third item in first row)
-            const itemsPerRow = 3;
-            const row = Math.floor(itemIndex / itemsPerRow);
-            const col = itemIndex % itemsPerRow;
-            
-            // Calculate position based on grid layout
-            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
-            const itemHeight = 120; // Approximate item height
-            const itemX = col * itemWidth + (itemWidth / 2);
-            const itemY = row * itemHeight + (itemHeight / 2);
-            
-            // Position hand to the left of the item
-            const handX = itemX - 60; // 60px to the left of item center
-            const handY = itemY - 20; // 20px above item center
-            
-            hand.style.left = `${handX}px`;
-            hand.style.top = `${handY}px`;
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            hand.style.transform = 'rotate(35deg)';
+            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
+
+            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+
+            requestAnimationFrame(() => { hand.style.opacity = '1'; });
             
             console.log('Hand positioned at:', handX, handY);
             console.log('Item position:', itemX, itemY);
@@ -1872,29 +1860,24 @@
             // Point to the bottom-left option (index 3)
             const targetItem = items[3];
             const itemRect = targetItem.getBoundingClientRect();
+            const catalogRect = catalog.getBoundingClientRect();
 
             console.log('Item rect:', itemRect);
             console.log('Catalog rect:', catalog.getBoundingClientRect());
 
-            // Position hand to point at the bottom-left item
-            // Use simpler positioning relative to the catalog
-            const itemIndex = 3; // Bottom left item (first item in second row)
-            const itemsPerRow = 3;
-            const row = Math.floor(itemIndex / itemsPerRow);
-            const col = itemIndex % itemsPerRow;
-            
-            // Calculate position based on grid layout
-            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
-            const itemHeight = 120; // Approximate item height
-            const itemX = col * itemWidth + (itemWidth / 2);
-            const itemY = row * itemHeight + (itemHeight / 2);
-            
-            // Position hand to the left of the item
-            const handX = itemX - 60; // 60px to the left of item center
-            const handY = itemY - 20; // 20px above item center
-            
-            hand.style.left = `${handX}px`;
-            hand.style.top = `${handY}px`;
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            hand.style.transform = 'rotate(35deg)';
+            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
+
+            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+
+            requestAnimationFrame(() => { hand.style.opacity = '1'; });
             
             console.log('Hand positioned at:', handX, handY);
             console.log('Item position:', itemX, itemY);
@@ -1922,29 +1905,24 @@
             // Point to the bottom-middle option (index 4)
             const targetItem = items[4];
             const itemRect = targetItem.getBoundingClientRect();
+            const catalogRect = catalog.getBoundingClientRect();
 
             console.log('Item rect:', itemRect);
             console.log('Catalog rect:', catalog.getBoundingClientRect());
 
-            // Position hand to point at the bottom-middle item
-            // Use simpler positioning relative to the catalog
-            const itemIndex = 4; // Bottom middle item (second item in second row)
-            const itemsPerRow = 3;
-            const row = Math.floor(itemIndex / itemsPerRow);
-            const col = itemIndex % itemsPerRow;
-            
-            // Calculate position based on grid layout
-            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
-            const itemHeight = 120; // Approximate item height
-            const itemX = col * itemWidth + (itemWidth / 2);
-            const itemY = row * itemHeight + (itemHeight / 2);
-            
-            // Position hand to the left of the item
-            const handX = itemX - 60; // 60px to the left of item center
-            const handY = itemY - 20; // 20px above item center
-            
-            hand.style.left = `${handX}px`;
-            hand.style.top = `${handY}px`;
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            hand.style.transform = 'rotate(35deg)';
+            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
+
+            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+
+            requestAnimationFrame(() => { hand.style.opacity = '1'; });
             
             console.log('Hand positioned at:', handX, handY);
             console.log('Item position:', itemX, itemY);
@@ -1972,29 +1950,24 @@
             // Point to the bottom-right option (index 5)
             const targetItem = items[5];
             const itemRect = targetItem.getBoundingClientRect();
+            const catalogRect = catalog.getBoundingClientRect();
 
             console.log('Item rect:', itemRect);
             console.log('Catalog rect:', catalog.getBoundingClientRect());
 
-            // Position hand to point at the bottom-right item
-            // Use simpler positioning relative to the catalog
-            const itemIndex = 5; // Bottom right item (third item in second row)
-            const itemsPerRow = 3;
-            const row = Math.floor(itemIndex / itemsPerRow);
-            const col = itemIndex % itemsPerRow;
-            
-            // Calculate position based on grid layout
-            const itemWidth = catalog.getBoundingClientRect().width / itemsPerRow;
-            const itemHeight = 120; // Approximate item height
-            const itemX = col * itemWidth + (itemWidth / 2);
-            const itemY = row * itemHeight + (itemHeight / 2);
-            
-            // Position hand to the left of the item
-            const handX = itemX - 60; // 60px to the left of item center
-            const handY = itemY - 20; // 20px above item center
-            
-            hand.style.left = `${handX}px`;
-            hand.style.top = `${handY}px`;
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.position = 'absolute';
+            hand.style.zIndex = '1000';
+            hand.style.transform = 'rotate(35deg)';
+            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
+            hand.style.transition = 'opacity 0.8s ease-in-out';
+            hand.style.opacity = '0';
+
+            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+
+            requestAnimationFrame(() => { hand.style.opacity = '1'; });
             
             console.log('Hand positioned at:', handX, handY);
             console.log('Item position:', itemX, itemY);
@@ -2013,7 +1986,7 @@
         }
 
         function stopTutorial() {
-            if (!isTutorialActive) return; 
+            // Make stop idempotent and unconditional
             isTutorialActive = false;
 
             if (tutorialInterval) {
@@ -2135,6 +2108,7 @@
             }, 50);
             
             updateHandPosition();
+            isTutorialActive = true;
             
             // Update position on window resize
             window.addEventListener('resize', updateHandPosition);
@@ -2208,6 +2182,14 @@
                 h.style.pointerEvents = 'none';
                 console.log('Disabled hotspot:', h.id);
             });
+            
+            // Global: stop any visible tutorial hand when a hotspot is clicked
+            document.addEventListener('click', function(e) {
+                const hotspotEl = e.target.closest ? e.target.closest('.hotspot') : null;
+                if (hotspotEl) {
+                    try { if (isTutorialActive) stopTutorial(); } catch (err) {}
+                }
+            }, true);
             
             // Check if catalog exists
             const catalog = document.getElementById('catalog');
