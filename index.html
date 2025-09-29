@@ -889,6 +889,8 @@
         let isTutorialActive = true;
         let tutorialInterval = null;
         let inactivityTimerId = null;
+        let postWindowsSelectTimerId = null; // after confirming windows, hint next hotspot if idle
+        let catalogHintStage = null; // null | 'option' | 'select' for non-windows catalogs
         const INACTIVITY_MS = 6000;
         let stopTutorialTimeoutId = null; // Manages the timeout for hiding the hand
 
@@ -897,40 +899,60 @@
         }
 
         function scheduleInactivityHand() {
-            if (!isWindowsCompleted()) return; // Only after Windows is confirmed
             if (inactivityTimerId) clearTimeout(inactivityTimerId);
             inactivityTimerId = setTimeout(() => {
+                // If intro is still shown, do nothing (Start Design is immediate)
+                const introContainer = document.getElementById('introContainer');
+                if (introContainer && getComputedStyle(introContainer).display !== 'none') {
+                    return;
+                }
+
                 // If catalog is visible, point within the current catalog instead of hotspot
                 const catalog = document.getElementById('catalog');
                 const isCatalogVisible = catalog && getComputedStyle(catalog).visibility === 'visible' && getComputedStyle(catalog).opacity !== '0';
                 if (isCatalogVisible && gameState.currentZone) {
                     const z = gameState.currentZone;
-                    if (z === 'windows') startWindowsTutorial();
-                    else if (z === 'chandelier') startChandelierTutorial();
-                    else if (z === 'bed_frame') startBedFrameTutorial();
-                    else if (z === 'bed_sheets') startBedSheetsTutorial();
-                    else if (z === 'floor') startFloorTutorial();
-                    else if (z === 'walls') startWallsTutorial();
+                    if (z === 'windows') {
+                        // Windows has its own immediate flow; skip timer trigger
+                        return;
+                    }
+                    // For non-windows catalogs, staged hints: first an option, then Select
+                    if (catalogHintStage === 'option') {
+                        if (z === 'chandelier') startChandelierTutorial();
+                        else if (z === 'bed_frame') startBedFrameTutorial();
+                        else if (z === 'bed_sheets') startBedSheetsTutorial();
+                        else if (z === 'floor') startFloorTutorial();
+                        else if (z === 'walls') startWallsTutorial();
+                    } else if (catalogHintStage === 'select') {
+                        startSelectButtonTutorial();
+                    }
                     return;
                 }
+
+                // Otherwise, point to the next recommended hotspot (not windows-only)
                 const nextZone = getNextRecommendedZone();
-                if (nextZone) startHotspotTutorial(nextZone);
+                if (!nextZone) return;
+                if (nextZone === 'windows') startWindowsHotspotTutorial();
+                else startHotspotTutorial(nextZone);
             }, INACTIVITY_MS);
         }
 
         function resetInactivityTimer() {
             if (inactivityTimerId) clearTimeout(inactivityTimerId);
-            // Hide hand on interaction
-            if (isTutorialActive) {
-                try { stopTutorial(); } catch (e) {}
-            }
+            if (postWindowsSelectTimerId) clearTimeout(postWindowsSelectTimerId);
             scheduleInactivityHand();
         }
+        
+        // Global activity listeners to reset inactivity timer across the app
+        ;['click','mousemove','keydown','touchstart'].forEach(evt => {
+            window.addEventListener(evt, () => resetInactivityTimer(), { passive: true });
+        });
         let isMobileDevice = false;
 
         // Function to get the next recommended zone (in original order)
         function getNextRecommendedZone() {
-            const originalOrder = ['windows', 'chandelier', 'bed_frame', 'bed_sheets', 'floor', 'walls'];
+            // Recommended queue: windows (fully tutorialized), then chandelier → walls → bed_sheets → bed_frame → floor
+            const originalOrder = ['windows', 'chandelier', 'walls', 'bed_sheets', 'bed_frame', 'floor'];
             return originalOrder.find(zone => !gameState.completedZones.includes(zone));
         }
 
@@ -1097,7 +1119,11 @@
             setTimeout(() => {
                 const firstRecommendedZone = getNextRecommendedZone();
                 if (firstRecommendedZone) {
-                    startHotspotTutorial(firstRecommendedZone);
+                    if (firstRecommendedZone === 'windows') {
+                        startWindowsHotspotTutorial();
+                    } else {
+                        startHotspotTutorial(firstRecommendedZone);
+                    }
                 }
                 // Begin inactivity monitoring (hand only after windows is confirmed)
                 scheduleInactivityHand();
@@ -1210,9 +1236,12 @@
                         introContainer.parentNode.removeChild(introContainer);
                     }
                     
-                    // Stop any current hand, then point at Select button
-                    if (isTutorialActive) { try { stopTutorial(); } catch(e) {} }
-                    startSelectButtonTutorial();
+                    // For windows, point immediately; other zones defer to inactivity timer
+                    if (zoneId === 'windows') {
+                        startSelectButtonTutorial();
+                    } else {
+                        resetInactivityTimer();
+                    }
                     
                     // Preview the variant
                     previewVariant(i);
@@ -1261,47 +1290,11 @@
             
             // If this is the tutorial, start the hand animation
             if (zoneId === 'windows') {
-                setTimeout(startWindowsTutorial, 600); // Increased delay to ensure catalog is visible
-            } else if (zoneId === 'chandelier') {
-                // Reset tutorial state for chandelier catalog
-                if (!isWindowsCompleted()) {
-                    isTutorialActive = true;
-                    setTimeout(startChandelierTutorial, 600); // Start chandelier catalog tutorial
-                } else {
-                    resetInactivityTimer();
-                }
-            } else if (zoneId === 'bed_frame') {
-                // Reset tutorial state for bed_frame catalog
-                if (!isWindowsCompleted()) {
-                    isTutorialActive = true;
-                    setTimeout(startBedFrameTutorial, 600); // Start bed_frame catalog tutorial
-                } else {
-                    resetInactivityTimer();
-                }
-            } else if (zoneId === 'bed_sheets') {
-                // Reset tutorial state for bed_sheets catalog
-                if (!isWindowsCompleted()) {
-                    isTutorialActive = true;
-                    setTimeout(startBedSheetsTutorial, 600); // Start bed_sheets catalog tutorial
-                } else {
-                    resetInactivityTimer();
-                }
-            } else if (zoneId === 'floor') {
-                // Reset tutorial state for floor catalog
-                if (!isWindowsCompleted()) {
-                    isTutorialActive = true;
-                    setTimeout(startFloorTutorial, 600); // Start floor catalog tutorial
-                } else {
-                    resetInactivityTimer();
-                }
-            } else if (zoneId === 'walls') {
-                // Reset tutorial state for walls catalog
-                if (!isWindowsCompleted()) {
-                    isTutorialActive = true;
-                    setTimeout(startWallsTutorial, 600); // Start walls catalog tutorial
-                } else {
-                    resetInactivityTimer();
-                }
+                setTimeout(startWindowsTutorial, 600); // Windows remains immediate
+            } else {
+                // Stage 1: point to a specific option after inactivity
+                catalogHintStage = 'option';
+                resetInactivityTimer();
             }
         }
         
@@ -1319,6 +1312,12 @@
             
             // Preview in scene
             replaceObject(zoneId, variantIndex);
+            
+            // After first option preview in non-windows, switch staged hint to Select
+            if (zoneId !== 'windows') {
+                catalogHintStage = 'select';
+                resetInactivityTimer();
+            }
         }
 
         function startSelectButtonTutorial() {
@@ -1334,16 +1333,15 @@
                 const btnRect = selectButton.getBoundingClientRect();
                 console.log('[select hand] btnRect=', btnRect);
 
-                hand.style.display = 'block';
-                hand.style.visibility = 'visible';
-                hand.style.position = 'fixed'; // position relative to viewport to avoid container offsets
+                // Prepare for measurement without flashing at 0,0
+                hand.style.position = 'fixed';
                 hand.style.zIndex = '10000';
-                // Remove animation that might be conflicting with rotation
                 hand.style.animation = 'none';
-                // Set rotation directly via setAttribute to ensure it takes precedence
-                hand.setAttribute('style', hand.getAttribute('style') + 'transform: rotate(30deg) !important;');
+                hand.style.transform = 'rotate(100deg)';
                 hand.style.transition = 'opacity 0.2s ease-in-out';
                 hand.style.opacity = '0';
+                hand.style.display = 'block';
+                hand.style.visibility = 'hidden';
 
                 const estimatedHandH = hand.offsetHeight || 60;
                 const topPos = btnRect.top + (btnRect.height / 2) - (estimatedHandH / 2);
@@ -1351,6 +1349,8 @@
                 hand.style.top = `${topPos}px`;
                 hand.style.left = `${leftPos}px`;
 
+                // Show after positioned so it doesn't appear off-screen first
+                hand.style.visibility = 'visible';
                 requestAnimationFrame(() => { hand.style.opacity = '1'; });
                 isTutorialActive = true;
                 suppressNextStop = true;
@@ -1378,6 +1378,8 @@
 
         function confirmSelection() {
             if (gameState.selectedVariant === null || !gameState.currentZone) return;
+            // Hide any active tutorial hand immediately on Select
+            try { if (isTutorialActive) stopTutorial(); } catch (e) {}
             
             const variantIndex = gameState.selectedVariant;
             const zoneId = gameState.currentZone;
@@ -1475,24 +1477,22 @@
             hand.style.opacity = '0'; // Start transparent for fade-in
             hand.style.display = 'block';
             hand.style.visibility = 'visible';
+            hand.style.zIndex = '10000';
+            hand.style.position = 'fixed';
 
             // Position hand to point at the hotspot
             const updateHandPosition = () => {
                 const hotspotRect = hotspot.getBoundingClientRect();
-                const gameContainer = document.getElementById('gameContainer');
-                const containerRect = gameContainer.getBoundingClientRect();
-                
-                // Position hand next to the hotspot
-                const screenHeight = window.innerHeight;
-                const topPos = hotspotRect.top - containerRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) - (screenHeight / 2.4);
-                const leftPos = hotspotRect.left - containerRect.left - hand.offsetWidth + 70;
+                // Position hand next to the hotspot using viewport coordinates (fixed positioning)
+                const topPos = hotspotRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) + 46;
+                const leftPos = hotspotRect.left - hand.offsetWidth + 70;
                 
                 hand.style.top = `${topPos}px`;
                 hand.style.left = `${leftPos}px`;
             };
             
             // Show the hand with specific rotation
-            hand.style.transform = 'rotate(-15deg)'; // Specific rotation for hotspot tutorial
+            hand.style.transform = 'rotate(-15deg)'; // Angle toward hotspot
             hand.style.animation = 'hand-float-windows 1s ease-in-out infinite alternate';
 
             updateHandPosition();
@@ -1545,10 +1545,13 @@
             
             closeCatalog();
             
-            // Start tutorial for next hotspot; after windows completion switch to inactivity mode
+            // After windows completion, set a dedicated 6s timer to point to next hotspot
             if (zoneId === 'windows') {
-                startNextTutorial();
-                scheduleInactivityHand();
+                if (postWindowsSelectTimerId) clearTimeout(postWindowsSelectTimerId);
+                postWindowsSelectTimerId = setTimeout(() => {
+                    const nextZone = getNextRecommendedZone();
+                    if (nextZone) startHotspotTutorial(nextZone);
+                }, INACTIVITY_MS);
             } else if (!isWindowsCompleted()) {
                 startNextTutorial();
             } else {
@@ -1709,6 +1712,7 @@
             selectButton.classList.remove('visible'); // Hide select button
             gameState.selectedVariant = null;
             gameState.currentZone = null;
+            catalogHintStage = null; // Reset staged hints
         }
         
         function showFinalScreen() {
@@ -1764,16 +1768,7 @@
             hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 50}px`;
             hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
 
-            const handleUserInteraction = () => {
-                if (isTutorialActive) {
-                    stopTutorial();
-                }
-            };
-
-            // Stop tutorial when user clicks any catalog item
-            items.forEach(item => {
-                item.addEventListener('click', handleUserInteraction, { once: true });
-            });
+            // Keep the hand visible while the user previews options; do not stop on item click
         }
 
         function startChandelierTutorial() {
@@ -1814,16 +1809,7 @@
             console.log('Item position:', itemX, itemY);
             console.log('Hand dimensions:', hand.offsetWidth, hand.offsetHeight);
 
-            const handleUserInteraction = () => {
-                if (isTutorialActive) {
-                    stopTutorial();
-                }
-            };
-
-            // Stop tutorial when user clicks any catalog item
-            items.forEach(item => {
-                item.addEventListener('click', handleUserInteraction, { once: true });
-            });
+            // Keep the hand visible while the user previews options; do not stop on item click
         }
 
         function startBedFrameTutorial() {
@@ -2077,6 +2063,14 @@
             
             updateHandPosition();
             
+            // Make the hand visible and fade it in for the intro
+            hand.style.display = 'block';
+            hand.style.visibility = 'visible';
+            hand.style.opacity = '0';
+            hand.style.transform = 'rotate(-95deg)';
+            hand.style.animation = 'hand-float 1s ease-in-out infinite alternate';
+            setTimeout(() => { hand.style.opacity = '1'; }, 50);
+            
             // Update position on window resize
             window.addEventListener('resize', updateHandPosition);
             
@@ -2239,10 +2233,10 @@
                 console.error('Start button not found!');
             }
 
-            // Start the tutorial hand pointing at the start button
+            // Start the tutorial hand pointing at the start button quickly
             setTimeout(() => {
                 startStartButtonTutorial();
-            }, 1000); // Wait 1 second after page load
+            }, 200);
 
             trackEvent('playable_start');
         });
