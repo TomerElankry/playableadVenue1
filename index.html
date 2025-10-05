@@ -102,6 +102,13 @@
     
     /* JS will scale #gameContainer to fit window (~98%) while preserving aspect */
     
+    /* Final screen: subtly enlarge (grow) the cabin view */
+    #gameContainer.final-zoom {
+        transform: scale(1.08);
+        transform-origin: center 42%;
+        transition: transform 450ms ease;
+    }
+    
     .hotspot {
         position: absolute;
         width: 40px; /* Smaller size */
@@ -217,7 +224,9 @@
         z-index: 9999;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        transition: opacity 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), visibility 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+        will-change: opacity;
+        contain: layout paint style;
     }
     
     .stars-overlay.active {
@@ -234,6 +243,8 @@
         background-repeat: no-repeat;
         background-position: center;
         animation: starTwinkle 1s ease-in-out infinite;
+        will-change: transform, opacity;
+        transform: translateZ(0);
     }
     
     .star.large {
@@ -247,6 +258,10 @@
         height: 15px;
         animation: starTwinkle 1.2s ease-in-out infinite;
     }
+
+    /* Smooth fade-in for hotspot cluster stars */
+    .hotspot-stars .star { opacity: 0; transition: opacity 240ms cubic-bezier(0.22, 0.61, 0.36, 1); }
+    .hotspot-stars.active .star { opacity: 1; }
     
     @keyframes starTwinkle {
         0%, 100% {
@@ -479,27 +494,7 @@
         margin-top: 10px;
     }
     
-    .stars {
-        display: flex;
-        gap: 10px;
-        margin: 30px 0;
-    }
-    
-    .star {
-        font-size: 48px;
-        color: #FFFFFF;
-        animation: starPop 0.5s ease forwards;
-        opacity: 0;
-        transform: scale(0);
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-    }
-    
-    @keyframes starPop {
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
+    /* Removed old final-screen star row styles; now using a single SVG group image */
     
     .hidden {
         display: none !important;
@@ -928,13 +923,8 @@
             <div id="finalScreen" class="final-screen">
                 <div class="final-title">Congratulations!</div>
                 <div class="final-subtitle">Your cabin is complete!</div>
-                <div class="stars">
-                    <span class="star">★</span>
-                    <span class="star">★</span>
-                    <span class="star">★</span>
-                    <span class="star">★</span>
-                    <span class="star">★</span>
-                </div>
+                <img id="finalStarsRow" src="assets/star /goldenStars.png" alt="Golden stars" style="width: 82%; max-width: 520px; height: auto; margin: 12px 0 8px;" />
+                <img id="finalStarsGroup" src="assets/star /Vector.svg" alt="Sparkles" style="width: 64%; max-width: 420px; height: auto; margin: 8px 0 18px;" />
                 <button class="btn btn-primary" onclick="downloadGame()">Click here!</button>
             </div>
         </div>
@@ -1119,8 +1109,11 @@
             
             // No circular highlight per updated design
             
-            // Show the effect
-            starsOverlay.classList.add('active');
+            // Show the effect (fade in overlay and stars)
+            requestAnimationFrame(() => {
+                starsOverlay.classList.add('active');
+                starsOverlay.classList.add('active');
+            });
             
             // Hide after 1.2 seconds
             setTimeout(() => {
@@ -1753,7 +1746,9 @@
             
             if (confirmedCount === totalZones) {
                 console.log('All zones confirmed! Showing final screen...');
-                setTimeout(showFinalScreen, 1000);
+                const gc = document.getElementById('gameContainer');
+                if (gc) gc.classList.add('final-zoom');
+                setTimeout(showFinalScreen, 600);
             }
             
             // Analytics
@@ -1904,13 +1899,7 @@
             const finalScreen = document.getElementById('finalScreen');
             finalScreen.style.display = 'flex';
             
-            // Animate stars
-            const stars = document.querySelectorAll('.star');
-            stars.forEach((star, index) => {
-                setTimeout(() => {
-                    star.style.animationDelay = `${index * 0.2}s`;
-                }, index * 200);
-            });
+            // Using static group SVG for stars; no per-star animation needed
             
             // Analytics
             trackEvent('rating_shown');
