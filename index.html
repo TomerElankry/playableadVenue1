@@ -206,6 +206,61 @@
         transform: translateX(-50%) translateY(0);
     }
     
+    /* Stars Effect Overlay */
+    .stars-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    }
+    
+    .stars-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .star {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background-image: url('assets/star /Vector.svg');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        animation: starTwinkle 1s ease-in-out infinite;
+    }
+    
+    .star.large {
+        width: 30px;
+        height: 30px;
+        animation: starTwinkle 0.8s ease-in-out infinite;
+    }
+    
+    .star.small {
+        width: 15px;
+        height: 15px;
+        animation: starTwinkle 1.2s ease-in-out infinite;
+    }
+    
+    @keyframes starTwinkle {
+        0%, 100% {
+            opacity: 0.3;
+            transform: scale(0.8);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+    }
+    
+    /* Circular highlight removed per design */
+    
     .catalog-item {
         width: 100%;
         background: rgba(246, 209, 201, 0.05); /* Very subtle cozy background */
@@ -912,6 +967,11 @@
         <!-- Play button -->
         <button id="playButton" class="play-button-bottom" onclick="downloadGame()">PLAY</button>
         
+        <!-- Stars Effect Overlay -->
+        <div id="starsOverlay" class="stars-overlay">
+            <!-- Stars will be dynamically added here -->
+        </div>
+        
         <!-- Tutorial hand positioned relative to bottom section -->
         <img src="assets/others/hovering hand.png" id="tutorialHand" class="tutorial-hand" alt="Guiding hand">
     </div>
@@ -1000,6 +1060,77 @@
             // This function will be called when the Play button is clicked
             // For now, we'll just show an alert or redirect
             alert('Game completed! Download functionality would be implemented here.');
+        }
+        
+        function createStarsEffect() {
+            // Get the current hotspot that was just selected
+            const currentZone = gameState.currentZone;
+            const hotspot = document.getElementById(`hotspot-${currentZone}`);
+            if (!hotspot) return;
+            
+            // Get hotspot position
+            const hotspotRect = hotspot.getBoundingClientRect();
+            const gameContainer = document.getElementById('gameContainer');
+            const containerRect = gameContainer.getBoundingClientRect();
+            
+            // Calculate relative position within the game container
+            const relativeX = hotspotRect.left - containerRect.left;
+            const relativeY = hotspotRect.top - containerRect.top;
+            
+            // Create a new overlay positioned at the hotspot
+            const starsOverlay = document.createElement('div');
+            starsOverlay.className = 'stars-overlay hotspot-stars';
+            // Use a tighter 180x180 area centered on the hotspot
+            starsOverlay.style.left = (relativeX - 90) + 'px'; // Center around hotspot
+            starsOverlay.style.top = (relativeY - 90) + 'px';
+            starsOverlay.style.width = '180px';
+            starsOverlay.style.height = '180px';
+            
+            // Add to game container
+            gameContainer.appendChild(starsOverlay);
+            
+            // Create random stars around the hotspot (smaller, denser cluster)
+            const starCount = 10;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Random size
+                const sizes = ['small', '', 'large'];
+                const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+                if (randomSize) star.classList.add(randomSize);
+                
+                // Random position around the center using polar coords for a circular cluster
+                const maxRadius = 80; // half of 160, keep within 180 box with padding
+                const r = Math.random() * maxRadius;
+                const theta = Math.random() * Math.PI * 2;
+                const cx = 90; // center of 180 box
+                const cy = 90;
+                const x = cx + r * Math.cos(theta);
+                const y = cy + r * Math.sin(theta);
+                star.style.left = x + 'px';
+                star.style.top = y + 'px';
+                
+                // Random animation delay
+                star.style.animationDelay = Math.random() * 2 + 's';
+                
+                starsOverlay.appendChild(star);
+            }
+            
+            // No circular highlight per updated design
+            
+            // Show the effect
+            starsOverlay.classList.add('active');
+            
+            // Hide after 1.2 seconds
+            setTimeout(() => {
+                starsOverlay.classList.remove('active');
+                setTimeout(() => {
+                    if (starsOverlay.parentNode) {
+                        starsOverlay.parentNode.removeChild(starsOverlay);
+                    }
+                }, 300); // Wait for fade out
+            }, 1200);
         }
 
         // Function to check if a zone is completed
@@ -1457,11 +1588,8 @@
                 item.classList.toggle('selected', index === variantIndex - 1);
             });
 
-            // Trigger achievement effect
-            const hotspot = document.getElementById(`hotspot-${zoneId}`);
-            if (hotspot) {
-                createAchievementEffect(hotspot.style.left, hotspot.style.top);
-            }
+            // Trigger new stars effect
+            createStarsEffect();
 
             approveSelection(); // Directly call the approval logic
         }
