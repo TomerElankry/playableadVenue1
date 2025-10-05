@@ -58,6 +58,9 @@
         background-repeat: no-repeat;
         overflow: hidden;
         border-radius: 20px;
+        /* Smooth transform when transitioning to end-screen zoom */
+        transition: transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        will-change: transform;
     }
     
     /* Bottom section - Intro/Catalog area */
@@ -68,6 +71,7 @@
         z-index: 100;
         width: min(420px, 100vw);
         margin: 0 auto; /* Center horizontally */
+        transition: height 450ms cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 
     /* #gameStage is no longer needed */
@@ -104,9 +108,9 @@
     
     /* Final screen: subtly enlarge (grow) the cabin view */
     #gameContainer.final-zoom {
-        transform: scale(1.08);
-        transform-origin: center 42%;
-        transition: transform 450ms ease;
+        transform: translateY(2px) scaleY(1.06); /* ensure full cabin stays visible */
+        transform-origin: center 28%;
+        transition: transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
     }
     
     .hotspot {
@@ -188,7 +192,7 @@
         bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
-        background: #9E9E9E;
+        background: var(--Play-CTA-Color, rgba(201, 190, 191, 1));
         color: white;
         border: none;
         border-radius: 12px;
@@ -262,6 +266,8 @@
     /* Smooth fade-in for hotspot cluster stars */
     .hotspot-stars .star { opacity: 0; transition: opacity 240ms cubic-bezier(0.22, 0.61, 0.36, 1); }
     .hotspot-stars.active .star { opacity: 1; }
+    /* End-screen burst uses dedicated star asset */
+    .end-burst-overlay .star { background-image: url('assets/star /endscreenstar.png'); }
     
     @keyframes starTwinkle {
         0%, 100% {
@@ -375,8 +381,8 @@
         margin: 0;
         margin-top: auto; /* Push to bottom of the frame */
         font-size: 10px; /* Reduced font size for single line */
-        color: #4E443C; /* Muted brown/taupe color from the image */
-        font-family: 'Arial', sans-serif; /* Clean sans-serif font like "Contemporary" */
+        color: var(--text-color, rgba(101, 77, 76, 1)); /* Designer text color */
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         font-weight: 500; /* Medium weight for better readability */
         line-height: 1.2; /* Tighter line height */
         text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8); /* Subtle text shadow */
@@ -406,26 +412,27 @@
         border-radius: 20px;
         cursor: pointer;
         font-size: 14px;
-        font-weight: bold;
+        font-weight: 700; /* bold */
         transition: all 0.3s ease;
         min-width: 80px;
         display: none; /* Hidden by default */
     }
     
     .select-button.disabled {
-        background: #6c757d; /* Grey */
-        color: #ffffff;
-        cursor: not-allowed;
+        background: rgba(248, 213, 205, 1); /* Keep same cozy color even when disabled */
+        color: var(--text-color, rgba(101, 77, 76, 1)); /* Designer text color */
+        cursor: default;
+        opacity: 1; /* No dimming */
     }
     
     .select-button.enabled {
-        background: #BFD8BD; /* Cozy sage green */
-        color: #4E443C; /* Dark brown text */
+        background: rgba(248, 213, 205, 1); /* Designer bubble color */
+        color: var(--text-color, rgba(101, 77, 76, 1)); /* Designer text color */
         cursor: pointer;
     }
     
     .select-button.enabled:hover {
-        background: #a9c7aa; /* Slightly darker green on hover */
+        background: rgba(242, 199, 189, 1); /* Slightly darker on hover */
         transform: translateY(-2px);
     }
     
@@ -480,21 +487,82 @@
         box-sizing: border-box;
     }
 
+    /* Staggered entry for end-screen elements */
+    .final-screen .final-title,
+    .final-screen .final-subtitle,
+    #finalStarsRow {
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+                    transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    .final-screen.show-title .final-title { opacity: 1; transform: translateY(0); }
+    .final-screen.show-subtitle .final-subtitle { opacity: 1; transform: translateY(0); }
+    .final-screen.show-stars #finalStarsRow { opacity: 1; transform: translateY(0); }
+
+    /* End-screen bottom white strip with Download CTA */
+    .final-bottom-bar {
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 100px;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 600;
+        opacity: 0;
+        transition: opacity 350ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    .download-cta {
+        background: rgba(255, 145, 128, 1);
+        color: #fff;
+        border: none;
+        border-radius: 18px;
+        padding: 14px 64px;
+        font-weight: 800;
+        font-size: 20px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+        transition: transform 150ms ease, box-shadow 150ms ease, opacity 250ms ease;
+    }
+    .download-cta:active { transform: translateY(1px); box-shadow: 0 6px 16px rgba(0,0,0,0.16); }
+
     .final-screen .final-title {
-        font-size: 80px;
-        font-family: 'Georgia', serif;
+        font-size: clamp(28px, 6vw, 48px);
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        font-weight: 800;
         text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
-        color: #BFD8BD; /* Cozy sage green */
+        color: rgba(131, 201, 201, 1); /* Designer cyan */
+        line-height: 1.15;
+        padding: 0 8px;
     }
 
     .final-screen .final-subtitle {
         font-size: 30px;
-        font-family: 'Georgia', serif;
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        font-weight: 600;
+        color: #ffffff; /* White */
         text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
         margin-top: 10px;
     }
     
     /* Removed old final-screen star row styles; now using a single SVG group image */
+    /* (removed) jumping stars burst */
+    .end-burst-row { position: relative; width: 100%; height: 80px; margin: 4px 0 0; pointer-events: none; }
+    .end-burst-row .burst {
+        position: absolute; top: 24px; /* baseline under row */
+        width: 26px; height: 26px;
+        background: url('assets/star /Vector.svg') center/contain no-repeat;
+        opacity: 0; transform: translateY(6px) scale(0.9);
+        animation: endBurst 900ms cubic-bezier(0.2,0.6,0.3,1) forwards;
+    }
+    .end-burst-row .burst.s { width: 18px; height: 18px; }
+    .end-burst-row .burst.l { width: 32px; height: 32px; }
+    @keyframes endBurst {
+        0% { opacity: 0; transform: translateY(6px) scale(0.9); }
+        50% { opacity: 1; transform: translateY(-8px) scale(1.08); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
     
     .hidden {
         display: none !important;
@@ -924,8 +992,8 @@
                 <div class="final-title">Congratulations!</div>
                 <div class="final-subtitle">Your cabin is complete!</div>
                 <img id="finalStarsRow" src="assets/star /goldenStars.png" alt="Golden stars" style="width: 82%; max-width: 520px; height: auto; margin: 12px 0 8px;" />
-                <img id="finalStarsGroup" src="assets/star /Vector.svg" alt="Sparkles" style="width: 64%; max-width: 420px; height: auto; margin: 8px 0 18px;" />
-                <button class="btn btn-primary" onclick="downloadGame()">Click here!</button>
+                <!-- Temporary jumping stars row under the golden row -->
+                <div id="endBurstRow" class="end-burst-row" aria-hidden="true"></div>
             </div>
         </div>
     </div>
@@ -962,6 +1030,11 @@
             <!-- Stars will be dynamically added here -->
         </div>
         
+        <!-- Final bottom bar with Download CTA (end screen only) -->
+        <div id="finalBottomBar" class="final-bottom-bar" style="display:none;">
+            <button id="finalDownloadBtn" class="download-cta" onclick="downloadGame()">DOWNLOAD</button>
+        </div>
+
         <!-- Tutorial hand positioned relative to bottom section -->
         <img src="assets/others/hovering hand.png" id="tutorialHand" class="tutorial-hand" alt="Guiding hand">
     </div>
@@ -1386,9 +1459,10 @@
             console.log('Catalog element:', catalog);
             console.log('Catalog grid element:', catalogGrid);
             
-            // Show select button initially in disabled state
-            selectButton.classList.add('visible', 'disabled');
+            // Show select button (always visible with bubble color)
+            selectButton.classList.add('visible');
             selectButton.classList.remove('enabled');
+            selectButton.classList.add('disabled');
             updateSelectButtonText();
             catalogGrid.innerHTML = '';
             
@@ -1425,7 +1499,7 @@
                     // Preview the variant
                     previewVariant(i);
                     
-                    // Enable select button
+                    // Keep visual style consistent but allow click by enabling class
                     selectButton.classList.remove('disabled');
                     selectButton.classList.add('enabled');
                     updateSelectButtonText();
@@ -1581,8 +1655,13 @@
                 item.classList.toggle('selected', index === variantIndex - 1);
             });
 
-            // Trigger new stars effect
-            createStarsEffect();
+            // Trigger hotspot stars only if this is not the final selection
+            const totalZones = CONFIG.application.zones.length;
+            const confirmedCountBefore = Object.keys(gameState.confirmedZones).length;
+            // If selecting this will complete all zones, skip hotspot effect (end screen has its own)
+            if (confirmedCountBefore + 1 < totalZones) {
+                createStarsEffect();
+            }
 
             approveSelection(); // Directly call the approval logic
         }
@@ -1746,6 +1825,8 @@
             
             if (confirmedCount === totalZones) {
                 console.log('All zones confirmed! Showing final screen...');
+                const playBtn = document.getElementById('playButton');
+                if (playBtn) { playBtn.style.transition = 'opacity 250ms ease'; playBtn.style.opacity = '0'; setTimeout(()=>{ playBtn.style.display='none'; }, 260); }
                 const gc = document.getElementById('gameContainer');
                 if (gc) gc.classList.add('final-zoom');
                 setTimeout(showFinalScreen, 600);
@@ -1898,8 +1979,88 @@
         function showFinalScreen() {
             const finalScreen = document.getElementById('finalScreen');
             finalScreen.style.display = 'flex';
+            // Hide only interactive catalog area; keep bottom bar visible for CTA
+            const catalog = document.getElementById('catalog');
+            if (catalog) catalog.style.display = 'none';
+
+            // Hide in-game Play, show end Download CTA
+            const playBtn = document.getElementById('playButton');
+            if (playBtn) playBtn.style.display = 'none';
+            const fb = document.getElementById('finalBottomBar');
+            if (fb) { fb.style.display = 'flex'; requestAnimationFrame(()=>{ fb.style.opacity = '1'; }); }
+
+            // Shrink bottom section height so cabin can extend further down
+            const bottomSection = document.querySelector('.bottom-section');
+            if (bottomSection) bottomSection.style.height = '100px';
+            // end
             
-            // Using static group SVG for stars; no per-star animation needed
+            // Stagger final overlay entries
+            requestAnimationFrame(() => {
+                finalScreen.classList.add('show-title');
+                setTimeout(() => {
+                    finalScreen.classList.add('show-subtitle');
+                    setTimeout(() => {
+                        finalScreen.classList.add('show-stars');
+                    }, 120);
+                }, 100);
+            });
+
+            // Build a hotspot-style burst under the golden row (similar to object pick)
+            const burstRow = document.getElementById('endBurstRow');
+            const goldenRow = document.getElementById('finalStarsRow');
+            const container = document.getElementById('gameContainer');
+            if (burstRow && goldenRow && container) {
+                // Position a stars-overlay below the golden row
+                const rowRect = goldenRow.getBoundingClientRect();
+                const contRect = container.getBoundingClientRect();
+                const overlay = document.createElement('div');
+                overlay.className = 'stars-overlay end-burst-overlay';
+                const w = 260, h = 140;
+                const cx = rowRect.left + rowRect.width/2 - contRect.left;
+                const top = rowRect.bottom + 6 - contRect.top;
+                overlay.style.left = `${Math.max(0, cx - w/2)}px`;
+                overlay.style.top = `${Math.max(0, top)}px`;
+                overlay.style.width = `${w}px`;
+                overlay.style.height = `${h}px`;
+                container.appendChild(overlay);
+
+                const count = 12;
+                for (let i = 0; i < count; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    // reuse size classes from hotspot effect
+                    if (i % 4 === 0) star.classList.add('large');
+                    if (i % 3 === 0) star.classList.add('small');
+                    const x = Math.random() * w;
+                    const y = Math.random() * h;
+                    star.style.left = `${x}px`;
+                    star.style.top = `${y}px`;
+                    star.style.animationDelay = `${Math.random() * 0.6}s`;
+                    overlay.appendChild(star);
+                }
+                requestAnimationFrame(() => overlay.classList.add('active'));
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                    setTimeout(() => overlay.remove(), 280);
+                }, 2000);
+            }
+
+            // Build a small burst of jumping stars under the subtitle
+            const burst = document.getElementById('endStarsBurst');
+            if (burst) {
+                burst.innerHTML = '';
+                const positions = [
+                    { x: 12, d: 0, s: 's' }, { x: 22, d: 60 }, { x: 34, d: 120, s: 'l' },
+                    { x: 46, d: 40 }, { x: 58, d: 90, s: 's' }, { x: 70, d: 20 }, { x: 82, d: 110, s: 'l' }
+                ];
+                positions.forEach(p => {
+                    const st = document.createElement('div');
+                    st.className = 'burst-star' + (p.s ? (' ' + p.s) : '');
+                    st.style.left = `calc(${p.x}% - 12px)`; // center stars
+                    st.style.animationDelay = `${p.d}ms`;
+                    burst.appendChild(st);
+                });
+            }
             
             // Analytics
             trackEvent('rating_shown');
@@ -2389,6 +2550,14 @@
             }, 200);
 
             trackEvent('playable_start');
+
+            // DEBUG: Skip to end screen (disabled)
+            // const DEBUG_SKIP_TO_END = false;
+            // if (DEBUG_SKIP_TO_END) {
+            //     const gc = document.getElementById('gameContainer');
+            //     if (gc) gc.classList.add('final-zoom');
+            //     setTimeout(showFinalScreen, 100);
+            // }
         });
     </script>
 </body>
