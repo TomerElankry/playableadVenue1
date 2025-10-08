@@ -882,6 +882,16 @@
         }
     }
 
+    /* Floor-specific bob that preserves the leftward/upward pointing angle */
+    @keyframes hand-float-floor {
+        0% {
+            transform: rotate(-40deg) translateY(0);
+        }
+        100% {
+            transform: rotate(-40deg) translateY(-6px);
+        }
+    }
+
     /* Remove the old point-and-float animation */
     
     /* Achievement Effect */
@@ -1549,6 +1559,15 @@
         function openCatalog(zoneId) {
             // Defensive: hide any currently visible tutorial hand when a catalog opens
             try { if (isTutorialActive) stopTutorial(); } catch (e) {}
+            
+            // Explicitly hide tutorial hand when opening any catalog
+            const hand = document.getElementById('tutorialHand');
+            if (hand) {
+                hand.style.opacity = '0';
+                hand.style.display = 'none';
+                hand.style.visibility = 'hidden';
+            }
+            
             console.log('Opening catalog for zone:', zoneId);
             
             // If another hotspot was previously opened but not completed, fade it back in
@@ -2315,7 +2334,7 @@
 
             // Position hand to point at the middle item (moved to the right and down)
             hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 50}px`;
-            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 80}px`;
 
             // Keep the hand visible while the user previews options; do not stop on item click
         }
@@ -2343,7 +2362,7 @@
             hand.style.opacity = '0';
 
             hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
-            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 80}px`;
 
             requestAnimationFrame(() => { hand.style.opacity = '1'; });
         }
@@ -2372,8 +2391,8 @@
             hand.style.transition = 'opacity 0.8s ease-in-out';
             hand.style.opacity = '0';
 
-            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
-            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 55}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 70}px`;
 
             requestAnimationFrame(() => { hand.style.opacity = '1'; });
             
@@ -2418,7 +2437,7 @@
             hand.style.opacity = '0';
 
             hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
-            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 80}px`;
 
             requestAnimationFrame(() => { hand.style.opacity = '1'; });
             
@@ -2445,8 +2464,8 @@
             if (!hand || items.length < 5) return;
             if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
 
-            // Point to the bottom-middle option (index 4)
-            const targetItem = items[4];
+            // Point to the bottom-right option (index 5)
+            const targetItem = items[5];
             const itemRect = targetItem.getBoundingClientRect();
             const catalogRect = catalog.getBoundingClientRect();
 
@@ -2457,13 +2476,13 @@
             hand.style.visibility = 'visible';
             hand.style.position = 'absolute';
             hand.style.zIndex = '1000';
-            hand.style.transform = 'rotate(35deg)';
-            hand.style.animation = 'hand-float-catalog 1s ease-in-out infinite alternate';
+            hand.style.transform = 'rotate(-40deg)';
+            hand.style.animation = 'hand-float-floor 1s ease-in-out infinite alternate';
             hand.style.transition = 'opacity 0.8s ease-in-out';
             hand.style.opacity = '0';
 
             hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
-            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 180}px`;
 
             requestAnimationFrame(() => { hand.style.opacity = '1'; });
             
@@ -2490,8 +2509,8 @@
             if (!hand || items.length < 6) return;
             if (stopTutorialTimeoutId) clearTimeout(stopTutorialTimeoutId);
 
-            // Point to the bottom-right option (index 5)
-            const targetItem = items[5];
+            // Point to the middle-bottom option (index 4)
+            const targetItem = items[4];
             const itemRect = targetItem.getBoundingClientRect();
             const catalogRect = catalog.getBoundingClientRect();
 
@@ -2507,8 +2526,8 @@
             hand.style.transition = 'opacity 0.8s ease-in-out';
             hand.style.opacity = '0';
 
-            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 40}px`;
-            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 40}px`;
+            hand.style.top = `${itemRect.top - catalogRect.top + (itemRect.height / 2) - (hand.offsetHeight / 2) + 55}px`;
+            hand.style.left = `${itemRect.left - catalogRect.left - hand.offsetWidth + 75}px`;
 
             requestAnimationFrame(() => { hand.style.opacity = '1'; });
             
