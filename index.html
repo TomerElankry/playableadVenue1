@@ -36,8 +36,11 @@
     }
     
     /* Top section color change when final screen shows */
+    .top-section.final-start {
+        background: rgba(255, 194, 185, 1); /* Lighter coral at selection of last item */
+    }
     .top-section.final-color {
-        background: rgba(255, 145, 128, 1); /* Coral/salmon background */
+        background: rgba(255, 145, 128, 1); /* Coral/salmon background after fadeout */
     }
     
     /* Middle section - Cabin */
@@ -203,7 +206,7 @@
         border: none;
         border-radius: 12px;
         padding: 12px 60px;
-        font-size: 16px;
+        font-size: 20px;
         font-weight: bold;
         cursor: pointer;
         z-index: 1001;
@@ -433,7 +436,7 @@
         color: var(--text-color, rgba(101, 77, 76, 1)); /* Designer text color */
         cursor: default;
         opacity: 1; /* No dimming */
-        pointer-events: none;
+        /* Allow events to fire so SFX can play; handler will check enabled state */
     }
     
     .select-button.enabled {
@@ -521,7 +524,7 @@
         color: #ffffff;
         font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         font-weight: 800;
-        font-size: clamp(36px, 9.5vw, 64px);
+        font-size: clamp(24px, 6.5vw, 42px);
         letter-spacing: 0.2px;
         opacity: 0;
         position: absolute;
@@ -534,7 +537,7 @@
                     transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
         margin: 0;
         text-align: center;
-        line-height: 1.15;
+        line-height: 1.1;
         pointer-events: none;
     }
     .final-screen.show-next .final-next-message { opacity: 1; transform: translate(-50%, -50%); }
@@ -632,17 +635,17 @@
         color: #fff;
         border: none;
         border-radius: 18px;
-        padding: 14px 64px;
+        padding: 4px 40px;
         font-weight: 800;
-        font-size: 20px;
-        letter-spacing: 0.5px;
+        font-size: 40px; /* larger text */
+        letter-spacing: 0.3px; /* tighten a bit so text fits */
         box-shadow: 0 8px 20px rgba(0,0,0,0.18);
         transition: transform 150ms ease, box-shadow 150ms ease, opacity 250ms ease;
     }
     .download-cta:active { transform: translateY(1px); box-shadow: 0 6px 16px rgba(0,0,0,0.16); }
 
     .final-screen .final-title {
-        font-size: clamp(28px, 6vw, 48px);
+        font-size: clamp(24px, 5vw, 40px);
         font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         font-weight: 800;
         text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
@@ -652,7 +655,7 @@
     }
 
     .final-screen .final-subtitle {
-        font-size: 30px;
+        font-size: 24px;
         font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         font-weight: 600;
         color: #ffffff; /* White */
@@ -978,6 +981,13 @@
         }
     }
 
+    @keyframes hotspot-pulse {
+        0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 rgba(255,255,255,0.0); }
+        50% { transform: translate(-50%, -50%) scale(1.25); box-shadow: 0 0 16px rgba(255,255,255,0.8); }
+        100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 rgba(255,255,255,0.0); }
+    }
+    .hotspot.pulse { animation: hotspot-pulse 500ms ease-out 1; }
+
     </style>
 	
     <script>
@@ -1257,7 +1267,49 @@
         gameAudio.ambient.muted = true; // allow muted autoplay on load
         gameAudio.click.volume = 0.6;
         gameAudio.select.volume = 0.8;
+        gameAudio.select.playbackRate = 1.2; // Play 20% faster
         gameAudio.completed.volume = 0.9;
+        gameAudio.completed.playbackRate = 1.2; // Play 20% faster
+
+        // Audio pool for rapid taps (pre-created nodes)
+        const sfxPools = {
+            click: [],
+            select: [],
+            completed: []
+        };
+        const POOL_SIZE = 14;
+        function buildPool(key, src, volume) {
+            const pool = [];
+            for (let i = 0; i < POOL_SIZE; i++) {
+                const a = new Audio(src);
+                a.preload = 'auto';
+                a.volume = volume;
+                a.playbackRate = gameAudio[key].playbackRate || 1.0;
+                a.muted = true; // will unmute on first gesture
+                pool.push(a);
+            }
+            sfxPools[key] = pool;
+        }
+        // Build initial muted pools
+        buildPool('click', 'assets/music loop and sfx/item click pop.mp3', gameAudio.click.volume);
+        buildPool('select', 'assets/music loop and sfx/Select button click (when stars appearing).mp3', gameAudio.select.volume);
+        buildPool('completed', 'assets/music loop and sfx/task completed.mp3', gameAudio.completed.volume);
+
+        function playFromPool(key) {
+            const pool = sfxPools[key];
+            if (!pool || pool.length === 0) return;
+            // find a free node or rotate
+            let node = pool.find(a => a.paused || a.ended);
+            if (!node) node = pool[Math.floor(Math.random() * pool.length)];
+            try {
+                node.currentTime = 0;
+                node.play().catch(() => {});
+            } catch (_) {}
+        }
+
+        function playClickSfx() {
+            playFromPool('click');
+        }
 
         function initAudioIfNeeded() {
             if (audioInitialized) return;
@@ -1268,6 +1320,8 @@
                     gameAudio.ambient.play().catch(() => {});
                 }
                 gameAudio.ambient.muted = false;
+                // Unmute existing pools on first gesture
+                Object.values(sfxPools).forEach(pool => pool.forEach(a => { a.muted = false; }));
             } catch(e) {}
         }
 
@@ -1283,14 +1337,6 @@
                     // Autoplay blocked; leave gesture fallback active
                 });
             }
-        }
-
-        function playClickSfx() {
-            try {
-                // Restart from start for rapid taps
-                gameAudio.click.currentTime = 0;
-                gameAudio.click.play().catch(() => {});
-            } catch(e) {}
         }
 
         // Start ambient and play click on first user interactions
@@ -1542,8 +1588,28 @@
             const selectBtn = document.getElementById('selectButton');
             if (selectBtn) {
                 selectBtn.addEventListener('click', function(ev) {
-                    console.log('[Select click]');
                     ev.stopPropagation();
+
+                    // Play sound immediately on click, before logic runs
+                    try {
+                        // Only play if user has made a valid selection
+                        if (gameState.selectedVariant && gameState.currentZone) {
+                            initAudioIfNeeded();
+                            
+                            // Check if this is the last zone
+                            const totalZones = CONFIG.application.zones.length;
+                            const confirmedCount = Object.keys(gameState.confirmedZones).length;
+                            const isLastZone = (confirmedCount + 1) >= totalZones;
+                            
+                            // Play appropriate sound immediately
+                            if (isLastZone) {
+                                playFromPool('completed');
+                            } else {
+                                playFromPool('select');
+                            }
+                        }
+                    } catch(_) {}
+
                     confirmSelection();
                 });
             }
@@ -1613,11 +1679,14 @@
                 hotspot.className = 'hotspot';
                 hotspot.id = `hotspot-${zoneId}`;
                 hotspot.textContent = '+'; // Add the plus sign
+                hotspot.setAttribute('data-zone', zoneId);
+
+                // Immediate SFX on tap for responsiveness
+                addTapSfx(hotspot);
                 hotspot.onclick = () => {
                     console.log('Hotspot clicked for zone:', zoneId);
                     openCatalog(zoneId);
                 };
-                hotspot.setAttribute('data-zone', zoneId);
 
                 // All hotspots are now visible since we removed automatic tutorial
                 
@@ -1704,6 +1773,7 @@
                 const variant = zoneConfig.variants[i-1] || { name: `${objectData.name} #${i}`};
                 const item = document.createElement('div');
                 item.className = 'catalog-item';
+                addTapSfx(item);
                 
                 // Click handler for preview
                 item.addEventListener('click', function() {
@@ -1895,19 +1965,12 @@
                 item.classList.toggle('selected', index === variantIndex - 1);
             });
 
-            // Determine if this selection completes all zones
+            // Determine if this completes all zones
             const totalZones = CONFIG.application.zones.length;
             const confirmedCountBefore = Object.keys(gameState.confirmedZones).length;
             const willCompleteAll = (confirmedCountBefore + 1) >= totalZones;
 
-            // Play appropriate SFX: completed for last, select otherwise
-            try {
-                if (willCompleteAll) {
-                    gameAudio.completed.currentTime = 0; gameAudio.completed.play().catch(() => {});
-                } else {
-                    gameAudio.select.currentTime = 0; gameAudio.select.play().catch(() => {});
-                }
-            } catch(_) {}
+            // Sound is now played on click for instant feedback, before this function is called
 
             // Trigger hotspot stars only if this is not the final selection
             // If selecting this will complete all zones, skip hotspot effect (end screen has its own)
@@ -2082,6 +2145,12 @@
             
             if (confirmedCount === totalZones) {
                 console.log('All zones confirmed! Showing final screen...');
+                // Set top section to the initial final-start color immediately at last select
+                const topSection = document.querySelector('.top-section');
+                if (topSection) {
+                    topSection.classList.add('final-start');
+                    topSection.classList.remove('final-color');
+                }
                 const playBtn = document.getElementById('playButton');
                 if (playBtn) { playBtn.style.transition = 'opacity 250ms ease'; playBtn.style.opacity = '0'; setTimeout(()=>{ playBtn.style.display='none'; }, 260); }
                 const gc = document.getElementById('gameContainer');
@@ -2306,7 +2375,10 @@
                         if (fs) fs.classList.add('show-next'); // reveal follow-up message
                         // Change top section color when final screen shows
                         const topSection = document.querySelector('.top-section');
-                        if (topSection) topSection.classList.add('final-color');
+                        if (topSection) {
+                            topSection.classList.remove('final-start');
+                            topSection.classList.add('final-color');
+                        }
                         // Start carousel rotation when the message appears
                         setTimeout(() => {
                             startCarouselRotation();
@@ -2319,7 +2391,10 @@
                     if (fs) fs.classList.add('show-next');
                     // Change top section color when final screen shows
                     const topSection = document.querySelector('.top-section');
-                    if (topSection) topSection.classList.add('final-color');
+                    if (topSection) {
+                        topSection.classList.remove('final-start');
+                        topSection.classList.add('final-color');
+                    }
                     // Start carousel rotation when the message appears
                     setTimeout(() => {
                         startCarouselRotation();
@@ -2912,29 +2987,60 @@
         // Safe stars effect when confirming a selection (non-final)
         function showHotspotStars(zoneId) {
             try {
-                const overlay = document.getElementById('starsOverlay');
                 const hotspot = document.getElementById(`hotspot-${zoneId}`);
-                if (!overlay || !hotspot) return;
+                const gameContainer = document.getElementById('gameContainer');
+                if (!hotspot || !gameContainer) return;
 
-                // Position overlay centered around the hotspot area
-                const container = document.getElementById('gameContainer');
-                const contRect = container.getBoundingClientRect();
                 const hsRect = hotspot.getBoundingClientRect();
+                const contRect = gameContainer.getBoundingClientRect();
 
-                overlay.style.display = 'block';
-                overlay.style.position = 'absolute';
+                // Create a stars overlay centered around the hotspot
+                const overlay = document.createElement('div');
+                overlay.className = 'stars-overlay hotspot-stars';
                 overlay.style.left = (hsRect.left - contRect.left - 90 + hsRect.width / 2) + 'px';
                 overlay.style.top = (hsRect.top - contRect.top - 90 + hsRect.height / 2) + 'px';
                 overlay.style.width = '180px';
                 overlay.style.height = '180px';
-                overlay.classList.add('active');
+                gameContainer.appendChild(overlay);
 
-                // Auto-hide after brief pulse
+                // Populate with twinkling stars (dense small cluster)
+                const count = 12;
+                for (let i = 0; i < count; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    if (i % 4 === 0) star.classList.add('large');
+                    if (i % 3 === 0) star.classList.add('small');
+                    const x = Math.random() * 180;
+                    const y = Math.random() * 180;
+                    star.style.left = `${x}px`;
+                    star.style.top = `${y}px`;
+                    star.style.animationDelay = `${Math.random() * 0.5}s`;
+                    overlay.appendChild(star);
+                }
+
+                // Reveal briefly, then remove
+                requestAnimationFrame(() => { overlay.classList.add('active'); });
                 setTimeout(() => {
                     overlay.classList.remove('active');
-                    overlay.style.display = 'none';
+                    setTimeout(() => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 400);
                 }, 600);
             } catch (_) { /* no-op */ }
+        }
+
+        // Unify tap SFX across pointer/touch/mouse with light de-dupe
+        let lastSfxTs = 0;
+        function addTapSfx(el) {
+            if (!el) return;
+            const handler = () => {
+                const now = Date.now();
+                if (now - lastSfxTs < 120) return; // de-dupe multiple events for same tap
+                lastSfxTs = now;
+                initAudioIfNeeded();
+                playClickSfx();
+            };
+            ['pointerdown','touchstart','mousedown'].forEach(evt => {
+                el.addEventListener(evt, handler, { passive: true, capture: true });
+            });
         }
     </script>
 </body>
