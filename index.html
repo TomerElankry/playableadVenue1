@@ -424,6 +424,8 @@
         transition: all 0.3s ease;
         min-width: 80px;
         display: none; /* Hidden by default */
+        position: relative;
+        z-index: 1001;
     }
     
     .select-button.disabled {
@@ -431,12 +433,14 @@
         color: var(--text-color, rgba(101, 77, 76, 1)); /* Designer text color */
         cursor: default;
         opacity: 1; /* No dimming */
+        pointer-events: none;
     }
     
     .select-button.enabled {
         background: rgba(248, 213, 205, 1); /* Designer bubble color */
         color: var(--text-color, rgba(101, 77, 76, 1)); /* Designer text color */
         cursor: pointer;
+        pointer-events: auto;
     }
     
     .select-button.enabled:hover {
@@ -1239,6 +1243,72 @@
         });
         let isMobileDevice = false;
 
+        // --- Audio: ambient loop + click SFX ---
+        let audioInitialized = false;
+        const gameAudio = {
+            ambient: new Audio('assets/music loop and sfx/Ambient Voiceover Background Loop.mp3'),
+            click: new Audio('assets/music loop and sfx/item click pop.mp3'),
+            select: new Audio('assets/music loop and sfx/Select button click (when stars appearing).mp3'),
+            completed: new Audio('assets/music loop and sfx/task completed.mp3')
+        };
+        gameAudio.ambient.loop = true;
+        gameAudio.ambient.preload = 'auto';
+        gameAudio.ambient.volume = 0.35; // subtle background
+        gameAudio.ambient.muted = true; // allow muted autoplay on load
+        gameAudio.click.volume = 0.6;
+        gameAudio.select.volume = 0.8;
+        gameAudio.completed.volume = 0.9;
+
+        function initAudioIfNeeded() {
+            if (audioInitialized) return;
+            audioInitialized = true;
+            // On first gesture: ensure ambient is playing, then unmute
+            try {
+                if (gameAudio.ambient.paused) {
+                    gameAudio.ambient.play().catch(() => {});
+                }
+                gameAudio.ambient.muted = false;
+            } catch(e) {}
+        }
+
+        // Try to autoplay ambient on load; keep gesture fallback if blocked
+        function tryAutoplayAmbientOnLoad() {
+            if (audioInitialized) return;
+            // Keep muted for autoplay compliance; unmute on gesture later
+            gameAudio.ambient.muted = true;
+            // Attempt immediate play; if blocked, gesture listeners will handle it
+            const p = gameAudio.ambient.play();
+            if (p && typeof p.then === 'function') {
+                p.then(() => { /* playing muted */ }).catch(() => {
+                    // Autoplay blocked; leave gesture fallback active
+                });
+            }
+        }
+
+        function playClickSfx() {
+            try {
+                // Restart from start for rapid taps
+                gameAudio.click.currentTime = 0;
+                gameAudio.click.play().catch(() => {});
+            } catch(e) {}
+        }
+
+        // Start ambient and play click on first user interactions
+        ['pointerdown','touchstart','mousedown','keydown'].forEach(evt => {
+            window.addEventListener(evt, initAudioIfNeeded, { once: true, passive: true, capture: true });
+        });
+        // Play click SFX for any in-game click/tap
+        document.addEventListener('click', function(e) {
+            initAudioIfNeeded();
+            // If click is on the Select button, play select SFX instead
+            const selectBtn = document.getElementById('selectButton');
+            if (selectBtn && (e.target === selectBtn || (e.target && selectBtn.contains(e.target)))) {
+                // Do not play global click; confirmSelection will play select or completed
+            } else {
+                playClickSfx();
+            }
+        }, true);
+
         // Function to get the next recommended zone (in original order)
         function getNextRecommendedZone() {
             // Recommended queue: windows (fully tutorialized), then chandelier → walls → bed_sheets → bed_frame → floor
@@ -1465,6 +1535,23 @@
         window.addEventListener('DOMContentLoaded', function() {
             isMobileDevice = detectMobileDevice();
             console.log("Device detected as: " + (isMobileDevice ? "mobile" : "desktop"));
+            // Attempt to start ambient immediately on load (looped)
+            tryAutoplayAmbientOnLoad();
+            scheduleAmbientRetry();
+            // Defensive: ensure Select button click always calls confirmSelection
+            const selectBtn = document.getElementById('selectButton');
+            if (selectBtn) {
+                selectBtn.addEventListener('click', function(ev) {
+                    console.log('[Select click]');
+                    ev.stopPropagation();
+                    confirmSelection();
+                });
+            }
+        });
+        window.addEventListener('load', tryAutoplayAmbientOnLoad, { once: true });
+        window.addEventListener('focus', tryAutoplayAmbientOnLoad, { once: true });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') tryAutoplayAmbientOnLoad();
         });
         
         function startDesign() {
@@ -1771,9 +1858,21 @@
         }
 
         function confirmSelection() {
+            console.log('[confirmSelection] start', { currentZone: gameState.currentZone, selectedVariant: gameState.selectedVariant });
+            // Derive missing state defensively
+            if (!gameState.currentZone) {
+                const catalog = document.getElementById('catalog');
+                const dz = catalog ? catalog.getAttribute('data-zone') : null;
+                if (dz) gameState.currentZone = dz;
+            }
+            if (gameState.selectedVariant === null) {
+                const items = Array.from(document.querySelectorAll('#catalog .catalog-item'));
+                const idx = items.findIndex(el => el.classList.contains('previewed') || el.classList.contains('selected'));
+                if (idx >= 0) gameState.selectedVariant = idx + 1;
+            }
             if (gameState.selectedVariant === null || !gameState.currentZone) return;
-            // Hide any active tutorial hand immediately on Select
-            try { if (isTutorialActive) stopTutorial(); } catch (e) {}
+             // Hide any active tutorial hand immediately on Select
+             try { if (isTutorialActive) stopTutorial(); } catch (e) {}
             
             const variantIndex = gameState.selectedVariant;
             const zoneId = gameState.currentZone;
@@ -1796,12 +1895,24 @@
                 item.classList.toggle('selected', index === variantIndex - 1);
             });
 
-            // Trigger hotspot stars only if this is not the final selection
+            // Determine if this selection completes all zones
             const totalZones = CONFIG.application.zones.length;
             const confirmedCountBefore = Object.keys(gameState.confirmedZones).length;
+            const willCompleteAll = (confirmedCountBefore + 1) >= totalZones;
+
+            // Play appropriate SFX: completed for last, select otherwise
+            try {
+                if (willCompleteAll) {
+                    gameAudio.completed.currentTime = 0; gameAudio.completed.play().catch(() => {});
+                } else {
+                    gameAudio.select.currentTime = 0; gameAudio.select.play().catch(() => {});
+                }
+            } catch(_) {}
+
+            // Trigger hotspot stars only if this is not the final selection
             // If selecting this will complete all zones, skip hotspot effect (end screen has its own)
-            if (confirmedCountBefore + 1 < totalZones) {
-                createStarsEffect();
+            if (!willCompleteAll) {
+                showHotspotStars(zoneId);
             }
 
             approveSelection(); // Directly call the approval logic
@@ -1915,13 +2026,18 @@
         }
 
         function approveSelection() {
+            console.log('[approveSelection] zone=', gameState.currentZone, ' variant=', gameState.selectedVariant);
             if (gameState.selectedVariant === null || !gameState.currentZone) return;
             
             const zoneId = gameState.currentZone;
             const variantIndex = gameState.selectedVariant;
             
             gameState.confirmedZones[zoneId] = variantIndex;
-            gameState.totalObjectsChosen++; // Increment global counter
+            if (!Number.isFinite(gameState.totalObjectsChosen)) gameState.totalObjectsChosen = 0;
+            // Only increment if this zone not previously confirmed
+            if (!gameState.completedZones.includes(zoneId)) {
+                gameState.totalObjectsChosen++;
+            }
             
             // Mark zone as completed
             if (!gameState.completedZones.includes(zoneId)) {
@@ -2792,6 +2908,34 @@
             //     setTimeout(showFinalScreen, 100);
             // }
         });
+
+        // Safe stars effect when confirming a selection (non-final)
+        function showHotspotStars(zoneId) {
+            try {
+                const overlay = document.getElementById('starsOverlay');
+                const hotspot = document.getElementById(`hotspot-${zoneId}`);
+                if (!overlay || !hotspot) return;
+
+                // Position overlay centered around the hotspot area
+                const container = document.getElementById('gameContainer');
+                const contRect = container.getBoundingClientRect();
+                const hsRect = hotspot.getBoundingClientRect();
+
+                overlay.style.display = 'block';
+                overlay.style.position = 'absolute';
+                overlay.style.left = (hsRect.left - contRect.left - 90 + hsRect.width / 2) + 'px';
+                overlay.style.top = (hsRect.top - contRect.top - 90 + hsRect.height / 2) + 'px';
+                overlay.style.width = '180px';
+                overlay.style.height = '180px';
+                overlay.classList.add('active');
+
+                // Auto-hide after brief pulse
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                    overlay.style.display = 'none';
+                }, 600);
+            } catch (_) { /* no-op */ }
+        }
     </script>
 </body>
 </html>
