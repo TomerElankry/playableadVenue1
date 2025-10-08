@@ -386,23 +386,25 @@
     .catalog-item-name {
         margin: 0;
         margin-top: auto; /* Push to bottom of the frame */
-        font-size: 10px; /* Reduced font size for single line */
+        font-size: 8px; /* Smaller font size for better fit */
         color: var(--text-color, rgba(101, 77, 76, 1)); /* Designer text color */
         font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         font-weight: 500; /* Medium weight for better readability */
-        line-height: 1.2; /* Tighter line height */
+        line-height: 1.1; /* Tighter line height for two lines */
         text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8); /* Subtle text shadow */
-        padding: 6px 8px; /* Padding for the connected name area */
+        padding: 4px 6px; /* Reduced padding for more text space */
         border-radius: 0 0 14px 14px; /* Only bottom corners rounded to match outer frame */
         background: linear-gradient(135deg, rgba(246, 209, 201, 0.3), rgba(241, 168, 157, 0.2)); /* Cozy color fade */
         border: none; /* Remove all borders for seamless merging */
         backdrop-filter: blur(2px); /* Subtle blur effect for coziness */
-        white-space: nowrap; /* Prevent text wrapping */
+        white-space: normal; /* Allow text wrapping to two lines */
         overflow: hidden; /* Hide overflow text */
         text-overflow: ellipsis; /* Show ellipsis for long text */
         width: 100%; /* Full width to eliminate gaps */
         box-sizing: border-box; /* Include padding in width calculation */
         display: block; /* Ensure proper display */
+        max-height: 24px; /* Limit to two lines */
+        word-wrap: break-word; /* Break long words if needed */
     }
     
     .catalog-buttons {
@@ -515,11 +517,11 @@
         color: #ffffff;
         font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         font-weight: 800;
-        font-size: clamp(22px, 5.5vw, 36px);
+        font-size: clamp(36px, 9.5vw, 64px);
         letter-spacing: 0.2px;
         opacity: 0;
         position: absolute;
-        top: 22%;
+        top: 20%;
         left: 50%;
         transform: translate(-50%, -50%);
         width: 90%;
@@ -538,7 +540,7 @@
         width: 85%;
         max-width: 450px;
         position: absolute;
-        top: 35%;
+        top: 45%;
         left: 50%;
         transform: translate(-50%, 40px); /* Position lower to avoid message overlap */
         overflow: visible; /* Allow side images to be fully visible */
@@ -562,8 +564,8 @@
         border-radius: 12px;
         padding: 4px;
         box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-        width: 90px;
-        height: 90px; /* More square aspect ratio */
+        width: 150px;
+        height: 150px; /* Maximum size square photos */
         transition: all 1200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
         transform-origin: center;
         flex-shrink: 0;
@@ -574,8 +576,8 @@
     
     /* Center image - grows larger but stays square */
     .final-carousel .card.center {
-        width: 110px;
-        height: 110px; /* Square aspect ratio */
+        width: 170px;
+        height: 170px; /* Maximum size center photo */
         transform: translate(-50%, -50%) scale(1.0) rotateY(0deg);
         opacity: 1;
         z-index: 3;
@@ -583,15 +585,15 @@
     
     /* Left side image - positioned left and smaller */
     .final-carousel .card.side.left {
-        transform: translate(-50%, -50%) translateX(-60px) scale(0.8) rotateY(-20deg);
-        opacity: 0.6;
+        transform: translate(-50%, -50%) translateX(-115px) scale(0.8) rotateY(-20deg);
+        opacity: 0.8;
         z-index: 1;
     }
     
     /* Right side image - positioned right and smaller */
     .final-carousel .card.side.right {
-        transform: translate(-50%, -50%) translateX(60px) scale(0.8) rotateY(20deg);
-        opacity: 0.6;
+        transform: translate(-50%, -50%) translateX(115px) scale(0.8) rotateY(20deg);
+        opacity: 0.8;
         z-index: 1;
     }
     
@@ -1351,7 +1353,11 @@
                     ];
                     return `assets/thumbs/chandelier/${thumbnails[i-1]}?v=${new Date().getTime()}`;
                 }, 
-                viewPath: (i) => `assets/items/chandelier/view/${i}.png?v=${new Date().getTime()}` 
+                viewPath: (i) => {
+                    const viewFileNumbers = [2, 3, 5, 4, 8, 6]; // Map option index -> file number; Modern Pendant (1) -> 2, Rustic Iron (2) -> 3, Branch Design (3) -> 5, Industrial Cage (5) -> 8
+                    const fileNumber = viewFileNumbers[i - 1] ?? i;
+                    return `assets/items/chandelier/view/${fileNumber}.png?v=${new Date().getTime()}`;
+                } 
             },
             'bed_frame': { 
                 name: 'Bed Frame', 
