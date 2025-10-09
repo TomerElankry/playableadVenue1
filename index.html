@@ -1151,7 +1151,7 @@
                         <div class="character-name">Hylary Shades</div>
                         <div class="dialogue-text">Help me to design the dream cabin in a serene retreat that blends modern minimalism with natural warmth.  Add subtle greenery, cozy throws, and understated lighting to create a tranquil atmosphere where nature and comfort meet.</div>
                     </div>
-                    <button class="play-button" onclick="startDesign()" id="startButton">Start Design</button>
+                    <button class="play-button" id="startButton">Start Design</button>
                 </div>
             </div>
         </div>
@@ -1160,7 +1160,7 @@
         <div id="catalog" class="catalog">
             <div id="catalogGrid" class="catalog-grid"></div>
             <div class="catalog-buttons">
-                <button id="selectButton" class="select-button" onclick="confirmSelection()">Select</button>
+                <button id="selectButton" class="select-button">Select</button>
             </div>
         </div>
         
@@ -1320,8 +1320,30 @@
                     gameAudio.ambient.play().catch(() => {});
                 }
                 gameAudio.ambient.muted = false;
-                // Unmute existing pools on first gesture
-                Object.values(sfxPools).forEach(pool => pool.forEach(a => { a.muted = false; }));
+                // Unmute existing pools immediately so sounds can play right away
+                try { Object.values(sfxPools).forEach(pool => pool.forEach(a => { a.muted = false; })); } catch(_) {}
+                // Warm decoders using temporary muted clones (does not affect pool nodes)
+                try {
+                    const warmList = [
+                        { src: 'assets/music loop and sfx/item click pop.mp3' },
+                        { src: 'assets/music loop and sfx/Select button click (when stars appearing).mp3' },
+                        { src: 'assets/music loop and sfx/task completed.mp3' }
+                    ];
+                    warmList.forEach(({ src }) => {
+                        const tmp = new Audio(src);
+                        tmp.preload = 'auto';
+                        tmp.muted = true;
+                        try {
+                            const p = tmp.play();
+                            if (p && typeof p.then === 'function') {
+                                p.then(() => { try { tmp.pause(); tmp.currentTime = 0; } catch(_) {} }).catch(() => {});
+                            } else {
+                                try { tmp.pause(); tmp.currentTime = 0; } catch(_) {}
+                            }
+                        } catch(_) {}
+                        // let GC collect tmp later
+                    });
+                } catch(_) {}
             } catch(e) {}
         }
 
@@ -1339,20 +1361,38 @@
             }
         }
 
+        // Retry ambient start a few times after load/focus (defensive)
+        function scheduleAmbientRetry() {
+            let attempts = 0;
+            const maxAttempts = 6;
+            const retryDelayMs = 1500;
+            const tick = () => {
+                if (audioInitialized || attempts >= maxAttempts) return;
+                tryAutoplayAmbientOnLoad();
+                attempts++;
+                if (!audioInitialized && attempts < maxAttempts) {
+                    setTimeout(tick, retryDelayMs);
+                }
+            };
+            setTimeout(tick, retryDelayMs);
+        }
+
         // Start ambient and play click on first user interactions
         ['pointerdown','touchstart','mousedown','keydown'].forEach(evt => {
             window.addEventListener(evt, initAudioIfNeeded, { once: true, passive: true, capture: true });
         });
-        // Play click SFX for any in-game click/tap
+        // Global click SFX fallback: only for elements without explicit tap SFX
         document.addEventListener('click', function(e) {
             initAudioIfNeeded();
-            // If click is on the Select button, play select SFX instead
             const selectBtn = document.getElementById('selectButton');
             if (selectBtn && (e.target === selectBtn || (e.target && selectBtn.contains(e.target)))) {
-                // Do not play global click; confirmSelection will play select or completed
-            } else {
-                playClickSfx();
+                return; // Select button handles its own SFX
             }
+            const target = e.target;
+            if (target && typeof target.closest === 'function' && target.closest('[data-sfx="tap"]')) {
+                return; // Element has its own tap SFX; avoid double-playing
+            }
+            playClickSfx();
         }, true);
 
         // Function to get the next recommended zone (in original order)
@@ -1584,34 +1624,22 @@
             // Attempt to start ambient immediately on load (looped)
             tryAutoplayAmbientOnLoad();
             scheduleAmbientRetry();
-            // Defensive: ensure Select button click always calls confirmSelection
+            // Select button: immediate SFX on pointerdown, then confirm once
             const selectBtn = document.getElementById('selectButton');
             if (selectBtn) {
-                selectBtn.addEventListener('click', function(ev) {
+                selectBtn.addEventListener('pointerdown', function(ev) {
                     ev.stopPropagation();
+                    // Do not prevent default; we will call confirmSelection() here
 
-                    // Play sound immediately on click, before logic runs
                     try {
-                        // Only play if user has made a valid selection
-                        if (gameState.selectedVariant && gameState.currentZone) {
-                            initAudioIfNeeded();
-                            
-                            // Check if this is the last zone
-                            const totalZones = CONFIG.application.zones.length;
-                            const confirmedCount = Object.keys(gameState.confirmedZones).length;
-                            const isLastZone = (confirmedCount + 1) >= totalZones;
-                            
-                            // Play appropriate sound immediately
-                            if (isLastZone) {
-                                playFromPool('completed');
-                            } else {
-                                playFromPool('select');
-                            }
-                        }
+                        initAudioIfNeeded();
+                        // Always play select SFX immediately; completion SFX will also play on end screen if needed
+                        playFromPool('select');
                     } catch(_) {}
 
+                    // Confirm immediately on pointerdown to avoid blocked click
                     confirmSelection();
-                });
+                }, { capture: true });
             }
         });
         window.addEventListener('load', tryAutoplayAmbientOnLoad, { once: true });
@@ -2956,14 +2984,17 @@
                 });
             }
 
-            // Add event listener to start button as backup
+            // Wire Start button: immediate SFX on pointerdown, then startDesign
             const startButton = document.getElementById('startButton');
             if (startButton) {
-                startButton.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('Start button clicked via event listener!');
-                    startDesign();
-                });
+                try { startButton.setAttribute('data-sfx', 'tap'); } catch(_) {}
+                startButton.addEventListener('pointerdown', function(e) {
+                    e.stopPropagation();
+                    // Play SFX immediately; avoid any preventDefault delays
+                    try { initAudioIfNeeded(); playClickSfx(); } catch(_) {}
+                    // Use microtask to avoid layout thrash during pointerdown
+                    Promise.resolve().then(() => startDesign());
+                }, { capture: true });
             } else {
                 console.error('Start button not found!');
             }
@@ -3031,16 +3062,15 @@
         let lastSfxTs = 0;
         function addTapSfx(el) {
             if (!el) return;
+            // Mark element so global fallback ignores it
+            try { el.setAttribute('data-sfx', 'tap'); } catch (_) {}
             const handler = () => {
-                const now = Date.now();
-                if (now - lastSfxTs < 120) return; // de-dupe multiple events for same tap
-                lastSfxTs = now;
+                // Always play; allow overlaps for rapid taps
                 initAudioIfNeeded();
                 playClickSfx();
             };
-            ['pointerdown','touchstart','mousedown'].forEach(evt => {
-                el.addEventListener(evt, handler, { passive: true, capture: true });
-            });
+            // Only pointerdown to avoid duplicate plays from touchstart/mousedown/click cascade
+            el.addEventListener('pointerdown', handler, { passive: true, capture: true });
         }
     </script>
 </body>
