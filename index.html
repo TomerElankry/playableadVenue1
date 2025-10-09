@@ -1633,8 +1633,11 @@
 
                     try {
                         initAudioIfNeeded();
-                        // Always play select SFX immediately; completion SFX will also play on end screen if needed
-                        playFromPool('select');
+                        // If this confirmation will complete all zones (x/6), play the task completed SFX
+                        const totalZones = CONFIG.application.zones.length;
+                        const confirmedCount = Object.keys(gameState.confirmedZones).length;
+                        const isLastZone = (confirmedCount + 1) >= totalZones;
+                        playFromPool(isLastZone ? 'completed' : 'select');
                     } catch(_) {}
 
                     // Confirm immediately on pointerdown to avoid blocked click
