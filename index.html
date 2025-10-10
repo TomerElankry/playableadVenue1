@@ -758,8 +758,9 @@
         pointer-events: auto; /* Allow clicks on the intro elements */
         z-index: 100;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        align-items: flex-start; /* position content near the top of bottom section */
+        justify-content: center; /* keep centered horizontally */
+        padding-top: 10px; /* slight drop to sit a bit lower */
     }
 
     .logo {
@@ -769,10 +770,10 @@
     }
 
     .play-button {
-        padding: 10px 16px;
+        padding: 8px 14px; /* smaller button */
         background-color: #F59D44; /* Warm orange button */
         border-radius: 20px;
-        font-size: 16px;
+        font-size: 14px;
         color: #FFFFFF; /* White text */
         cursor: pointer;
         pointer-events: auto;
@@ -802,8 +803,8 @@
     }
 
     .character-portrait {
-        width: 72px; /* Smaller portrait */
-        height: 72px;
+        width: 60px; /* Slightly smaller portrait */
+        height: 60px;
         border-radius: 50%;
         border: 4px solid white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.15);
@@ -817,10 +818,10 @@
         position: relative;
         background: #F4ECE6; /* Light beige/off-white bubble */
         border-radius: 20px; /* Softer corners */
-        padding: 12px 16px; /* Compact padding */
+        padding: 10px 14px; /* Smaller padding */
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         width: 100%; /* Fill width of bottom section minus padding */
-        max-width: 360px;
+        max-width: 300px; /* Smaller bubble */
         font-family: 'Georgia', 'Times New Roman', serif;
         cursor: default;
         display: flex; /* Arrange content horizontally */
@@ -956,7 +957,7 @@
     }
     
     .speech-bubble .dialogue-text {
-        font-size: 14px; /* Smaller text */
+        font-size: 13px; /* Smaller text */
         color: #4E443C;
         line-height: 1.4;
         margin: 0; /* Reduced space */
@@ -1164,8 +1165,8 @@
             </div>
         </div>
         
-        <!-- Play button -->
-        <button id="playButton" class="play-button-bottom" onclick="downloadGame()">PLAY</button>
+        <!-- Play button (visible from start) -->
+        <button id="playButton" class="play-button-bottom" style="display:block" onclick="downloadGame()">PLAY</button>
         
         <!-- Stars Effect Overlay -->
         <div id="starsOverlay" class="stars-overlay">
@@ -1668,7 +1669,7 @@
                 }, 800);
             }
             
-            // Show play button
+            // Play button is visible from start; keep it visible
             const playButton = document.getElementById('playButton');
             if (playButton) playButton.style.display = 'block';
             
@@ -3068,12 +3069,17 @@
             // Mark element so global fallback ignores it
             try { el.setAttribute('data-sfx', 'tap'); } catch (_) {}
             const handler = () => {
-                // Always play; allow overlaps for rapid taps
+                const now = Date.now();
+                // Debounce across multiple simultaneous events (pointer + touch + mouse)
+                if (now - lastSfxTs < 80) return;
+                lastSfxTs = now;
                 initAudioIfNeeded();
                 playClickSfx();
             };
-            // Only pointerdown to avoid duplicate plays from touchstart/mousedown/click cascade
+            // Attach to multiple gesture primitives for broader WebKit reliability
             el.addEventListener('pointerdown', handler, { passive: true, capture: true });
+            el.addEventListener('touchstart', handler, { passive: true, capture: true });
+            el.addEventListener('mousedown', handler, { passive: true, capture: true });
         }
     </script>
 </body>
