@@ -185,7 +185,7 @@ def main():
                     html = html.replace(f"src='{img_path}'", f"src='{data_uri}'")
                     html = html.replace(f'src="{img_path}"', f'src="{data_uri}"')
     
-    # Inject asset map as JavaScript
+    # Inject asset map as JavaScript and override gameData functions
     print("\n💉 Injecting catalog asset map...")
     asset_map_json = json.dumps(asset_map, separators=(',', ':'))
     
@@ -194,30 +194,40 @@ def main():
     // Pre-loaded catalog assets (base64 embedded)
     window.EMBEDDED_ASSETS = {asset_map_json};
     
-    // Override image loading to use embedded assets
+    // Override gameData functions to use embedded assets
     (function() {{
-        const originalImage = window.Image;
-        window.Image = function() {{
-            const img = new originalImage();
-            const originalSrcSetter = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src').set;
-            Object.defineProperty(img, 'src', {{
-                set: function(value) {{
-                    // Check if this is an asset path
-                    if (value && typeof value === 'string' && value.startsWith('assets/')) {{
-                        const cleanPath = value.split('?')[0]; // Remove query params
-                        if (window.EMBEDDED_ASSETS[cleanPath]) {{
-                            originalSrcSetter.call(this, window.EMBEDDED_ASSETS[cleanPath]);
-                            return;
-                        }}
+        // Store original gameData
+        const originalGameData = window.gameData;
+        
+        // Override after gameData is defined
+        document.addEventListener('DOMContentLoaded', function() {{
+            if (window.gameData) {{
+                // Override thumbPath and viewPath functions for all categories
+                Object.keys(window.gameData).forEach(category => {{
+                    const categoryData = window.gameData[category];
+                    
+                    // Override thumbPath
+                    if (categoryData.thumbPath) {{
+                        const originalThumbPath = categoryData.thumbPath;
+                        categoryData.thumbPath = function(i) {{
+                            const originalPath = originalThumbPath(i);
+                            const cleanPath = originalPath.split('?')[0]; // Remove query params
+                            return window.EMBEDDED_ASSETS[cleanPath] || originalPath;
+                        }};
                     }}
-                    originalSrcSetter.call(this, value);
-                }},
-                get: function() {{
-                    return Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src').get.call(this);
-                }}
-            }});
-            return img;
-        }};
+                    
+                    // Override viewPath
+                    if (categoryData.viewPath) {{
+                        const originalViewPath = categoryData.viewPath;
+                        categoryData.viewPath = function(i) {{
+                            const originalPath = originalViewPath(i);
+                            const cleanPath = originalPath.split('?')[0]; // Remove query params
+                            return window.EMBEDDED_ASSETS[cleanPath] || originalPath;
+                        }};
+                    }}
+                }});
+            }}
+        }});
     }})();
     </script>
     """
