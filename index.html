@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <title>Cabin Design - Playable Ad</title>
-    
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
@@ -760,7 +759,7 @@
         display: flex;
         align-items: flex-start; /* position content near the top of bottom section */
         justify-content: center; /* keep centered horizontally */
-        padding-top: 10px; /* slight drop to sit a bit lower */
+        padding-top: 2px; /* sit closer to cabin */
     }
 
     .logo {
@@ -784,11 +783,28 @@
         font-weight: bold;
         white-space: nowrap; /* Keep button on one line */
     }
+
+    
     
     .play-button:hover {
         background-color: #E88A2A; /* Darker orange on hover */
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+
+    /* Intro layout: portrait left, bubble + button stacked on right */
+    .intro-text-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin-left: 12px;
+    }
+
+    .intro-start {
+        margin-top: 20px; /* slightly lower */
+        align-self: flex-start; /* allow horizontal nudge */
+        transform: translateX(60px); /* align roughly over PLAY center */
     }
     
     .character-dialogue {
@@ -813,6 +829,8 @@
         background-position: 65% center;
         flex-shrink: 0; /* Prevent image from shrinking */
     }
+
+    
     
     .speech-bubble {
         position: relative;
@@ -844,6 +862,15 @@
         border-top: 10px solid transparent;
         border-bottom: 10px solid transparent;
         border-right: 10px solid #F4ECE6;
+    }
+
+    /* Fine-tune intro bubble position */
+    #introBubble {
+        transform: translate(-14px, 6px);
+    }
+
+    #introPortrait {
+        transform: translateY(-12px);
     }
 
     .tutorial-hand {
@@ -1145,14 +1172,16 @@
     <div class="bottom-section">
         <!-- New Intro UI -->
         <div id="introContainer">
-            <div class="character-dialogue">
-                <div class="character-portrait"></div>
-                <div class="speech-bubble">
-                    <div class="dialogue-content">
-                        <div class="character-name">Hylary Shades</div>
-                        <div class="dialogue-text">Help me to design the dream cabin in a serene retreat that blends modern minimalism with natural warmth.  Add subtle greenery, cozy throws, and understated lighting to create a tranquil atmosphere where nature and comfort meet.</div>
+            <div class="character-dialogue" style="display:flex; flex-direction: row; align-items: center; gap: 8px;">
+                <div class="character-portrait" id="introPortrait"></div>
+                <div class="intro-text-wrap" id="introTextWrap">
+                    <div class="speech-bubble" id="introBubble">
+                        <div class="dialogue-content">
+                            <div class="character-name">Hylary Shades</div>
+                            <div class="dialogue-text">Help me to design the dream cabin in a serene retreat that blends modern minimalism with natural warmth.  Add subtle greenery, cozy throws, and understated lighting to create a tranquil atmosphere where nature and comfort meet.</div>
+                        </div>
                     </div>
-                    <button class="play-button" id="startButton">Start Design</button>
+                    <button class="play-button intro-start" id="startButton">Start Design</button>
                 </div>
             </div>
         </div>
@@ -1693,6 +1722,8 @@
                 scheduleInactivityHand();
             }, 800);
         }
+
+        // removed edit mode
         
         function initializeHotspots() {
             const hotspotsContainer = document.getElementById('hotspots');
