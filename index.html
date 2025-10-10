@@ -217,7 +217,6 @@
     
     .play-button-bottom:hover {
         background: #757575;
-        transform: translateX(-50%) translateY(-2px);
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
     }
     
@@ -447,7 +446,6 @@
     
     .select-button.enabled:hover {
         background: rgba(242, 199, 189, 1); /* Slightly darker on hover */
-        transform: translateY(-2px);
     }
     
     .select-button.visible {
@@ -788,7 +786,6 @@
     
     .play-button:hover {
         background-color: #E88A2A; /* Darker orange on hover */
-        transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     }
 
@@ -804,7 +801,11 @@
     .intro-start {
         margin-top: 20px; /* slightly lower */
         align-self: flex-start; /* allow horizontal nudge */
-        transform: translateX(60px); /* align roughly over PLAY center */
+        --intro-x: 60px; /* horizontal offset over PLAY */
+        transform: translateX(var(--intro-x));
+    }
+    .intro-start:hover {
+        transform: translateX(var(--intro-x)); /* no vertical shift on hover */
     }
     
     .character-dialogue {
@@ -1285,6 +1286,7 @@
 
         // --- Audio: ambient loop + click SFX ---
         let audioInitialized = false;
+        let allowAudioStart = false; // Only allow unmuting after Start Design
         const gameAudio = {
             ambient: new Audio('assets/music loop and sfx/Ambient Voiceover Background Loop.mp3'),
             click: new Audio('assets/music loop and sfx/item click pop.mp3'),
@@ -1407,22 +1409,25 @@
             setTimeout(tick, retryDelayMs);
         }
 
-        // Start ambient and play click on first user interactions
+        // Start ambient on first user gesture AFTER Start Design is pressed
         ['pointerdown','touchstart','mousedown','keydown'].forEach(evt => {
-            window.addEventListener(evt, initAudioIfNeeded, { once: true, passive: true, capture: true });
+            window.addEventListener(evt, function () {
+                if (!allowAudioStart || audioInitialized) return;
+                initAudioIfNeeded();
+            }, { passive: true, capture: true });
         });
-        // Global click SFX fallback: only for elements without explicit tap SFX
+        // Remove broad click fallback to avoid stray SFX. Rely on explicit handlers.
         document.addEventListener('click', function(e) {
-            initAudioIfNeeded();
-            const selectBtn = document.getElementById('selectButton');
-            if (selectBtn && (e.target === selectBtn || (e.target && selectBtn.contains(e.target)))) {
-                return; // Select button handles its own SFX
-            }
+            // Only proceed if audio is allowed and the target is one of our interactive elements
+            if (!allowAudioStart) return;
             const target = e.target;
-            if (target && typeof target.closest === 'function' && target.closest('[data-sfx="tap"]')) {
-                return; // Element has its own tap SFX; avoid double-playing
-            }
-            playClickSfx();
+            const isInteractive = !!(target && typeof target.closest === 'function' && (
+                target.closest('.hotspot') ||
+                target.closest('.catalog-item') ||
+                target.closest('#startButton')
+            ));
+            if (!isInteractive) return;
+            // These elements already play SFX on pointerdown via addTapSfx
         }, true);
 
         // Function to get the next recommended zone (in original order)
@@ -1698,6 +1703,9 @@
                 }, 800);
             }
             
+            // Enable audio start on subsequent gestures
+            allowAudioStart = true;
+
             // Play button is visible from start; keep it visible
             const playButton = document.getElementById('playButton');
             if (playButton) playButton.style.display = 'block';
@@ -3102,8 +3110,10 @@
             const handler = () => {
                 const now = Date.now();
                 // Debounce across multiple simultaneous events (pointer + touch + mouse)
-                if (now - lastSfxTs < 80) return;
+                if (now - lastSfxTs < 30) return;
                 lastSfxTs = now;
+                // Gate pre-start audio: only Start button can trigger sounds before allowAudioStart
+                if (!allowAudioStart && el.id !== 'startButton') return;
                 initAudioIfNeeded();
                 playClickSfx();
             };
