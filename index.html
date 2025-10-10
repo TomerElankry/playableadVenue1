@@ -2950,9 +2950,9 @@
                 const gameContainer = document.getElementById('gameContainer');
                 const containerRect = gameContainer.getBoundingClientRect();
                 
-                // Position hand next to the hotspot
+                // Position hand next to the hotspot (lowered by 30px)
                 const screenHeight = window.innerHeight;
-                const topPos = hotspotRect.top - containerRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) - (screenHeight / 2.4);
+                const topPos = hotspotRect.top - containerRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) - (screenHeight / 2.4) + 30;
                 const leftPos = hotspotRect.left - containerRect.left - hand.offsetWidth + 70;
                 
                 hand.style.top = `${topPos}px`;
