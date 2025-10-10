@@ -66,8 +66,9 @@
         background-repeat: no-repeat;
         overflow: hidden;
         border-radius: 20px;
-        /* Smooth transform when transitioning to end-screen zoom */
-        transition: transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: translateZ(0);
         will-change: transform;
     }
     
@@ -96,6 +97,9 @@
         pointer-events: none;
         opacity: 1;
         transition: opacity 0.4s ease-in-out;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: translateZ(0);
     }
     
     /* Set proper z-index for layering order */
@@ -118,7 +122,6 @@
     #gameContainer.final-zoom {
         transform: translateY(2px) scaleY(1.06); /* ensure full cabin stays visible */
         transform-origin: center 28%;
-        transition: transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
     }
     
     .hotspot {
@@ -2241,17 +2244,32 @@
             
             if (confirmedCount === totalZones) {
                 console.log('All zones confirmed! Showing final screen...');
-                // Set top section to the initial final-start color immediately at last select
-                const topSection = document.querySelector('.top-section');
-                if (topSection) {
-                    topSection.classList.add('final-start');
-                    topSection.classList.remove('final-color');
-                }
-                const playBtn = document.getElementById('playButton');
-                if (playBtn) { playBtn.style.transition = 'opacity 250ms ease'; playBtn.style.opacity = '0'; setTimeout(()=>{ playBtn.style.display='none'; }, 260); }
-                const gc = document.getElementById('gameContainer');
-                if (gc) gc.classList.add('final-zoom');
-                setTimeout(showFinalScreen, 600);
+                // Smooth coordinated transition to end screen
+                requestAnimationFrame(() => {
+                    // Set top section to the initial final-start color
+                    const topSection = document.querySelector('.top-section');
+                    if (topSection) {
+                        topSection.classList.add('final-start');
+                        topSection.classList.remove('final-color');
+                    }
+                    // Fade out PLAY button quickly
+                    const playBtn = document.getElementById('playButton');
+                    if (playBtn) { 
+                        playBtn.style.transition = 'opacity 150ms ease'; 
+                        playBtn.style.opacity = '0'; 
+                        setTimeout(()=>{ playBtn.style.display='none'; }, 160); 
+                    }
+                    // Apply zoom very quickly with smooth easing
+                    const gc = document.getElementById('gameContainer');
+                    if (gc) {
+                        gc.style.transition = 'transform 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                        // Force a reflow to ensure transition applies
+                        void gc.offsetHeight;
+                        gc.classList.add('final-zoom');
+                    }
+                    // Show final screen after zoom completes
+                    setTimeout(showFinalScreen, 160);
+                });
             }
             
             // Analytics
