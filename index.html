@@ -151,9 +151,9 @@
     }
 
     .hotspot.confirmed {
-        background: rgba(76, 175, 80, 0.7); /* Green to indicate completion */
+        background: rgba(128, 128, 128, 0.7); /* Keep original gray background */
         border-color: #fff;
-        font-size: 40px; /* Ensure V sign is same size as plus */
+        /* No text content - hotspot remains visible but empty */
     }
     
     .catalog {
@@ -802,7 +802,7 @@
     }
 
     .intro-start {
-        margin-top: 24px; /* Move button up closer to speech bubble */
+        margin-top: 40px; /* Lower the button even more */
         align-self: flex-start; /* allow horizontal nudge */
         --intro-x: 0px; /* will be set precisely after layout */
         transform: translateX(var(--intro-x));
@@ -1527,16 +1527,16 @@
             return gameState.completedZones.includes(zoneId);
         }
 
-        // Function to make a hotspot disappear
+        // Function to mark hotspot as completed (remove plus sign but keep hotspot visible)
         function hideCompletedHotspot(zoneId) {
             const hotspot = document.getElementById(`hotspot-${zoneId}`);
             if (hotspot) {
-                hotspot.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
-                hotspot.style.opacity = '0';
-                hotspot.style.transform = 'translate(-50%, -50%) scale(0.5)';
-                setTimeout(() => {
-                    hotspot.style.display = 'none';
-                }, 500);
+                // Remove the plus sign but keep the hotspot visible with original styling
+                hotspot.textContent = '';
+                hotspot.classList.add('confirmed');
+                hotspot.style.opacity = '1'; // Make sure hotspot is visible
+                hotspot.style.pointerEvents = 'none'; // Disable clicks
+                // Keep all original styling - just remove the plus sign
             }
         }
 
@@ -2050,11 +2050,14 @@
             const zoneElement = document.getElementById(`zone-${zoneId}`);
             if (zoneElement) {
                 // This part of the logic needs to be adapted to the new structure
-                // For now, we'll just update the hotspot if it's the windows zone
+                // Mark hotspot as completed (remove plus sign but keep visible)
                 const hotspot = document.getElementById(`hotspot-${zoneId}`);
                 if (hotspot) {
-                    hotspot.style.opacity = '0'; // Hide hotspot
+                    hotspot.textContent = ''; // Remove plus sign
+                    hotspot.classList.add('confirmed');
+                    hotspot.style.opacity = '1'; // Make sure hotspot is visible
                     hotspot.style.pointerEvents = 'none'; // Disable clicks
+                    // Keep all original styling - just remove the plus sign
                 }
             }
             
@@ -2553,10 +2556,10 @@
                 clearInterval(carouselInterval);
             }
             
-            // Start the rotation every 4 seconds
+            // Start the rotation every 2 seconds (faster carousel)
             carouselInterval = setInterval(() => {
                 rotateCarousel();
-            }, 4000);
+            }, 2000);
         }
         
         function rotateCarousel() {
