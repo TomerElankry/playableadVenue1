@@ -802,7 +802,7 @@
     }
 
     .intro-start {
-        margin-top: 42px; /* lower the button further */
+        margin-top: 24px; /* Move button up closer to speech bubble */
         align-self: flex-start; /* allow horizontal nudge */
         --intro-x: 0px; /* will be set precisely after layout */
         transform: translateX(var(--intro-x));
@@ -841,7 +841,7 @@
         position: relative;
         background: #F4ECE6; /* Light beige/off-white bubble */
         border-radius: 16px; /* Softer corners */
-        padding: 6px 10px; /* More compact padding */
+        padding: 16px 20px; /* Smaller padding for smaller bubble */
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         width: 100%; /* Fill width of bottom section minus padding */
         max-width: 230px; /* Even smaller bubble */
@@ -989,9 +989,9 @@
     }
     
     .speech-bubble .dialogue-text {
-        font-size: 11px; /* Smaller text */
+        font-size: 14px; /* Smaller text for more compact bubble */
         color: #4E443C;
-        line-height: 1.3;
+        line-height: 1.4;
         margin: 0; /* Reduced space */
     }
 
@@ -1122,7 +1122,7 @@
             "zones": ["windows", "chandelier", "bed_frame", "bed_sheets", "floor", "walls"],
             "variant": "default",
             "tutorial": {
-                "text": "Help us decorate the dream cabin!",
+                "text": "Help me to design the dream cabin in a serene retreat that blends modern minimalism with natural warmth.",
                 "anchor": "windows",
                 "offset": { "x": 0, "y": -180 },
                 "delay_ms": 300,
@@ -1183,7 +1183,7 @@
                     <div class="speech-bubble" id="introBubble">
                         <div class="dialogue-content">
                             <div class="character-name">Hylary Shades</div>
-                            <div class="dialogue-text">Help me to design the dream cabin in a serene retreat that blends modern minimalism with natural warmth.  Add subtle greenery, cozy throws, and understated lighting to create a tranquil atmosphere where nature and comfort meet.</div>
+                            <div class="dialogue-text">Help me to design the dream cabin in a serene retreat that blends modern minimalism with natural warmth.</div>
                         </div>
                     </div>
                     <button class="play-button intro-start" id="startButton">Start Design</button>
