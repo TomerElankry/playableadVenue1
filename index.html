@@ -156,6 +156,19 @@
         /* No text content - hotspot remains visible but empty */
     }
     
+    /* Small white circle inside completed hotspot */
+    .hotspot.confirmed::after {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background: white;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
     .catalog {
         position: absolute;
         top: 0;
@@ -219,7 +232,7 @@
     }
     
     .play-button-bottom:hover {
-        background: #757575;
+        background: var(--Play-CTA-Color, rgba(201, 190, 191, 1)); /* Keep same color on hover */
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
     }
     
@@ -788,8 +801,17 @@
     
     
     .play-button:hover {
-        background-color: #E88A2A; /* Darker orange on hover */
+        background-color: #F59D44; /* Keep same orange color on hover */
         box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    
+    .play-button:active {
+        background-color: #F59D44; /* Keep same orange color when clicked */
+    }
+    
+    .play-button:focus {
+        background-color: #F59D44; /* Keep same orange color when focused */
+        outline: none;
     }
 
     /* Intro layout: portrait left, bubble + button stacked on right */
@@ -798,11 +820,11 @@
         flex-direction: column;
         align-items: center;
         gap: 8px;
-        margin-left: 12px;
+        margin-left: -20px; /* Move bubble to the left */
     }
 
     .intro-start {
-        margin-top: 40px; /* Lower the button even more */
+        margin-top: 56px; /* Lower the button more */
         align-self: flex-start; /* allow horizontal nudge */
         --intro-x: 0px; /* will be set precisely after layout */
         transform: translateX(var(--intro-x));
@@ -833,6 +855,9 @@
         background-size: cover;
         background-position: 65% center;
         flex-shrink: 0; /* Prevent image from shrinking */
+        position: relative;
+        left: -15px; /* Move left */
+        top: -10px; /* Move up */
     }
 
     
@@ -844,7 +869,7 @@
         padding: 16px 20px; /* Smaller padding for smaller bubble */
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         width: 100%; /* Fill width of bottom section minus padding */
-        max-width: 230px; /* Even smaller bubble */
+        max-width: 280px; /* Wider bubble to fit text in 3 lines */
         font-family: 'Georgia', 'Times New Roman', serif;
         cursor: default;
         display: flex; /* Arrange content horizontally */
@@ -931,6 +956,15 @@
             transform: rotate(-40deg) translateY(-6px);
         }
     }
+    
+    @keyframes hand-float-select {
+        0% {
+            transform: rotate(100deg) translateY(0);
+        }
+        100% {
+            transform: rotate(100deg) translateY(-5px);
+        }
+    }
 
     /* Remove the old point-and-float animation */
     
@@ -989,7 +1023,7 @@
     }
     
     .speech-bubble .dialogue-text {
-        font-size: 14px; /* Smaller text for more compact bubble */
+        font-size: 16px; /* Larger text for better readability */
         color: #4E443C;
         line-height: 1.4;
         margin: 0; /* Reduced space */
@@ -1531,12 +1565,12 @@
         function hideCompletedHotspot(zoneId) {
             const hotspot = document.getElementById(`hotspot-${zoneId}`);
             if (hotspot) {
-                // Remove the plus sign but keep the hotspot visible with original styling
+                // Remove the plus sign but keep the hotspot visible with grey background
                 hotspot.textContent = '';
                 hotspot.classList.add('confirmed');
                 hotspot.style.opacity = '1'; // Make sure hotspot is visible
+                hotspot.style.background = 'rgba(128, 128, 128, 0.5)'; // Grey background for completed state
                 hotspot.style.pointerEvents = 'none'; // Disable clicks
-                // Keep all original styling - just remove the plus sign
             }
         }
 
@@ -1835,15 +1869,16 @@
                     prevHotspot.textContent = '+'; // Restore plus sign
                     prevHotspot.classList.remove('confirmed');
                     prevHotspot.style.opacity = '1'; // Make visible again
+                    prevHotspot.style.background = 'rgba(128, 128, 128, 0.5)'; // Restore original grey color
                     prevHotspot.style.pointerEvents = 'auto';
                 }
             }
 
-            // Hide active hotspot while browsing catalog
+            // Change active hotspot to old pink while browsing catalog
             gameState.currentZone = zoneId;
             const activeHotspot = document.getElementById(`hotspot-${zoneId}`);
             if (activeHotspot && !isZoneCompleted(zoneId)) {
-                activeHotspot.style.opacity = '0'; // Hide while browsing
+                activeHotspot.style.background = '#F6D1C9'; // Change to old pink
                 activeHotspot.style.pointerEvents = 'none'; // Disable clicks while catalog is open
             }
             const zoneConfig = CONFIG.application.zonesConfig[zoneId];
@@ -1883,6 +1918,12 @@
                     const introContainer = document.getElementById('introContainer');
                     if (introContainer) {
                         introContainer.parentNode.removeChild(introContainer);
+                    }
+                    
+                    // Hide the hotspot when user clicks an option
+                    const activeHotspot = document.getElementById(`hotspot-${zoneId}`);
+                    if (activeHotspot && !isZoneCompleted(zoneId)) {
+                        activeHotspot.style.opacity = '0'; // Hide hotspot
                     }
                     
                     // For windows, point immediately; for non-windows, stop option hand and start 6s-to-Select
@@ -1988,7 +2029,6 @@
                 // Prepare for measurement without flashing at 0,0
                 hand.style.position = 'fixed';
                 hand.style.zIndex = '10000';
-                hand.style.animation = 'none';
                 hand.style.transform = 'rotate(100deg)';
                 hand.style.transition = 'opacity 0.2s ease-in-out';
                 hand.style.opacity = '0';
@@ -2001,9 +2041,14 @@
                 hand.style.top = `${topPos}px`;
                 hand.style.left = `${leftPos}px`;
 
-                // Show after positioned so it doesn't appear off-screen first
+                // Show after positioned with hovering animation (keep rotation at 100deg)
                 hand.style.visibility = 'visible';
-                requestAnimationFrame(() => { hand.style.opacity = '1'; });
+                hand.style.animation = 'none'; // Clear any previous animation
+                requestAnimationFrame(() => { 
+                    hand.style.opacity = '1';
+                    // Add inline keyframe animation to maintain 100deg rotation while hovering
+                    hand.style.animation = 'hand-float-select 1s ease-in-out infinite alternate';
+                });
                 isTutorialActive = true;
                 suppressNextStop = true;
             }, 150);
@@ -2409,6 +2454,7 @@
                 const hotspot = document.getElementById(`hotspot-${currentZone}`);
                 if (hotspot) {
                     hotspot.style.opacity = '1'; // Make visible again
+                    hotspot.style.background = 'rgba(128, 128, 128, 0.5)'; // Restore original grey color
                     hotspot.style.pointerEvents = 'auto'; // Re-enable clicks
                     hotspot.textContent = '+'; // Restore plus sign
                 }
@@ -2440,7 +2486,7 @@
 
             // Fade out all hotspots when end screen appears
             document.querySelectorAll('.hotspot').forEach(hotspot => {
-                hotspot.style.transition = 'opacity 0.3s ease-out';
+                hotspot.style.transition = 'opacity 0.1s ease-out';
                 hotspot.style.opacity = '0';
             });
 

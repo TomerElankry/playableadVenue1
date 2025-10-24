@@ -189,51 +189,31 @@ def main():
     print("\n💉 Injecting catalog asset map...")
     asset_map_json = json.dumps(asset_map, separators=(',', ':'))
     
-    injection_code = f"""
+    # First, inject the asset map in the head
+    head_injection = f"""
     <script>
     // Pre-loaded catalog assets (base64 embedded)
     window.EMBEDDED_ASSETS = {asset_map_json};
-    
-    // Override gameData functions to use embedded assets
-    (function() {{
-        // Store original gameData
-        const originalGameData = window.gameData;
-        
-        // Override after gameData is defined
-        document.addEventListener('DOMContentLoaded', function() {{
-            if (window.gameData) {{
-                // Override thumbPath and viewPath functions for all categories
-                Object.keys(window.gameData).forEach(category => {{
-                    const categoryData = window.gameData[category];
-                    
-                    // Override thumbPath
-                    if (categoryData.thumbPath) {{
-                        const originalThumbPath = categoryData.thumbPath;
-                        categoryData.thumbPath = function(i) {{
-                            const originalPath = originalThumbPath(i);
-                            const cleanPath = originalPath.split('?')[0]; // Remove query params
-                            return window.EMBEDDED_ASSETS[cleanPath] || originalPath;
-                        }};
-                    }}
-                    
-                    // Override viewPath
-                    if (categoryData.viewPath) {{
-                        const originalViewPath = categoryData.viewPath;
-                        categoryData.viewPath = function(i) {{
-                            const originalPath = originalViewPath(i);
-                            const cleanPath = originalPath.split('?')[0]; // Remove query params
-                            return window.EMBEDDED_ASSETS[cleanPath] || originalPath;
-                        }};
-                    }}
-                }});
-            }}
-        }});
-    }})();
     </script>
     """
+    html = html.replace('</head>', head_injection + '</head>')
     
-    # Insert before closing </head>
-    html = html.replace('</head>', injection_code + '</head>')
+    # Directly replace the function calls in the HTML
+    print("🔧 Replacing function calls with embedded asset lookups...")
+    
+    # Replace objectData.thumbPath(i) calls
+    html = re.sub(
+        r'objectData\.thumbPath\(i\)',
+        r'(function() { const originalPath = objectData.thumbPath(i); const cleanPath = originalPath.split("?")[0]; return window.EMBEDDED_ASSETS[cleanPath] || originalPath; })()',
+        html
+    )
+    
+    # Replace objectData.viewPath calls (with any parameter)
+    html = re.sub(
+        r'objectData\.viewPath\(([^)]+)\)',
+        r'(function() { const originalPath = objectData.viewPath(\1); const cleanPath = originalPath.split("?")[0]; return window.EMBEDDED_ASSETS[cleanPath] || originalPath; })()',
+        html
+    )
     
     # Remove Google Fonts
     html = re.sub(r'<link[^>]*fonts\.googleapis\.com[^>]*>', 

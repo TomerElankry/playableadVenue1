@@ -1,0 +1,92 @@
+╔════════════════════════════════════════════════════════════════╗
+║                   PLAYABLE AD - QUICK START                    ║
+╚════════════════════════════════════════════════════════════════╝
+
+📦 FILES READY TO SHARE:
+
+1. FOR APPLOVIN (Ad Network Submission):
+   → index_applovin.html (2.2 MB)
+   → Upload this + the assets/ folder
+   → Read: APPLOVIN_README.md for details
+
+2. FOR CLIENT TESTING:
+   → playableadVenue1.zip (66 MB) - on your Desktop
+   → Send via email/WeTransfer/Google Drive
+   → Client extracts and opens index.html
+
+3. FOR LIVE URL (Recommended):
+   → Push to GitHub: git push origin main
+   → Enable GitHub Pages in repo settings
+   → Share URL: https://[username].github.io/playableadVenue1/
+
+─────────────────────────────────────────────────────────────────
+
+🎯 WHAT'S DIFFERENT IN APPLOVIN VERSION:
+
+✅ All main images embedded & compressed
+✅ File size optimized (2.2 MB vs 133 KB original)
+✅ Works offline (except catalog items)
+❌ Audio removed (saves 2 MB, most users have sound off)
+⚠️  Catalog items load from assets/ folder (include when uploading)
+
+─────────────────────────────────────────────────────────────────
+
+🚀 QUICK DEPLOY OPTIONS:
+
+Option A: GitHub Pages (Free, Live URL)
+  1. git push origin main
+  2. Enable Pages in repo settings
+  3. Share URL with client
+
+Option B: Netlify Drop (Instant)
+  1. Go to: https://app.netlify.com/drop
+  2. Drag the playableadVenue1 folder
+  3. Get instant URL
+
+Option C: Email/Transfer (Simple)
+  1. Send playableadVenue1.zip from Desktop
+  2. Client extracts and opens index.html
+
+─────────────────────────────────────────────────────────────────
+
+📋 FILES IN YOUR PROJECT:
+
+index.html                    - Original (development version)
+index_applovin.html          - AppLovin optimized (2.2 MB)
+index_applovin_full.html     - Ultra-compressed (570 KB)
+playableadVenue1.zip         - Complete project (Desktop)
+
+APPLOVIN_README.md           - Detailed AppLovin instructions
+SHARING_OPTIONS.md           - All sharing methods explained
+QUICK_START.txt              - This file
+
+build_applovin_optimized.py  - Rebuild script (if needed)
+build_applovin_full.py       - Ultra-compressed rebuild script
+
+─────────────────────────────────────────────────────────────────
+
+✅ TESTING CHECKLIST:
+
+Before sharing, verify:
+□ Intro screen loads
+□ "Start Design" button works
+□ Hotspots clickable
+□ Catalog opens
+□ Items can be selected
+□ Progress counter updates (x/6)
+□ Final screen shows "PLAY" button
+□ Works on mobile (test in DevTools)
+
+─────────────────────────────────────────────────────────────────
+
+💡 RECOMMENDED FOR YOU:
+
+For AppLovin:     Use index_applovin.html + assets/ folder
+For Client:       Use GitHub Pages or send ZIP file
+For Quick Demo:   Use Netlify Drop
+
+─────────────────────────────────────────────────────────────────
+
+Need help? Check SHARING_OPTIONS.md for detailed instructions!
+
+╚════════════════════════════════════════════════════════════════╝
