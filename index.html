@@ -1061,7 +1061,7 @@
                 },
                 "chandelier": {
                     "view": "items/chandelier/view/default",
-                    "dot": {"x": -4, "y": -129},
+                    "dot": {"x": -4, "y": -200},
                     "variants": [
                         {"item": "items/chandelier/item/1.png", "view": "items/chandelier/view/1.png", "name": "Modern Pendant"},
                         {"item": "items/chandelier/item/2.png", "view": "items/chandelier/view/2.png", "name": "Rustic Iron"},
@@ -1832,17 +1832,20 @@
                 revertPreview(previousZone);
                 const prevHotspot = document.getElementById(`hotspot-${previousZone}`);
                 if (prevHotspot) {
+                    prevHotspot.textContent = '+'; // Restore plus sign
+                    prevHotspot.classList.remove('confirmed');
                     prevHotspot.style.opacity = '1';
                     prevHotspot.style.pointerEvents = 'auto';
                 }
             }
 
-            // Set current zone and fade out the newly opened hotspot (so it won't disturb preview)
+            // Keep active hotspot visible but remove plus sign while browsing catalog
             gameState.currentZone = zoneId;
             const activeHotspot = document.getElementById(`hotspot-${zoneId}`);
-            if (activeHotspot) {
-                activeHotspot.style.opacity = '0';
-                activeHotspot.style.pointerEvents = 'none';
+            if (activeHotspot && !isZoneCompleted(zoneId)) {
+                activeHotspot.textContent = ''; // Remove plus sign while browsing
+                activeHotspot.style.opacity = '1'; // Keep visible
+                activeHotspot.style.pointerEvents = 'none'; // Disable clicks while catalog is open
             }
             const zoneConfig = CONFIG.application.zonesConfig[zoneId];
             const catalog = document.getElementById('catalog');
