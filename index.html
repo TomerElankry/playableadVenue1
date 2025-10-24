@@ -690,6 +690,11 @@
             padding: 10px 50px; /* Smaller padding */
             font-size: 18px; /* Smaller font size */
         }
+        
+        /* Mobile-only: Make pink background cover full width */
+        .top-section {
+            width: 100vw; /* Full width on mobile */
+        }
     }
 
     .final-screen .final-subtitle {
@@ -1524,17 +1529,17 @@
             // Create a new overlay positioned at the hotspot
             const starsOverlay = document.createElement('div');
             starsOverlay.className = 'stars-overlay hotspot-stars';
-            // Use a tighter 180x180 area centered on the hotspot
-            starsOverlay.style.left = (relativeX - 90) + 'px'; // Center around hotspot
-            starsOverlay.style.top = (relativeY - 90) + 'px';
-            starsOverlay.style.width = '180px';
-            starsOverlay.style.height = '180px';
+            // Use a larger 240x240 area centered on the hotspot
+            starsOverlay.style.left = (relativeX - 120) + 'px'; // Center around hotspot
+            starsOverlay.style.top = (relativeY - 120) + 'px';
+            starsOverlay.style.width = '240px';
+            starsOverlay.style.height = '240px';
             
             // Add to game container
             gameContainer.appendChild(starsOverlay);
             
-            // Create random stars around the hotspot (smaller, denser cluster)
-            const starCount = 10;
+            // Create random stars around the hotspot (more stars for better visibility)
+            const starCount = 20;
             for (let i = 0; i < starCount; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
@@ -1545,15 +1550,22 @@
                 if (randomSize) star.classList.add(randomSize);
                 
                 // Random position around the center using polar coords for a circular cluster
-                const maxRadius = 80; // half of 160, keep within 180 box with padding
+                const maxRadius = 100; // Increased radius for larger container
                 const r = Math.random() * maxRadius;
                 const theta = Math.random() * Math.PI * 2;
-                const cx = 90; // center of 180 box
-                const cy = 90;
+                const cx = 120; // center of 240 box
+                const cy = 120;
                 const x = cx + r * Math.cos(theta);
                 const y = cy + r * Math.sin(theta);
-                star.style.left = x + 'px';
-                star.style.top = y + 'px';
+                
+                // Ensure stars stay within container bounds (with padding for star size)
+                const starSize = star.classList.contains('large') ? 30 : star.classList.contains('small') ? 15 : 20;
+                const padding = starSize / 2;
+                const boundedX = Math.max(padding, Math.min(240 - padding, x));
+                const boundedY = Math.max(padding, Math.min(240 - padding, y));
+                
+                star.style.left = boundedX + 'px';
+                star.style.top = boundedY + 'px';
                 
                 // Random animation delay
                 star.style.animationDelay = Math.random() * 2 + 's';
@@ -2615,15 +2627,18 @@
                 overlay.style.height = `${h}px`;
                 container.appendChild(overlay);
 
-                const count = 12;
+                const count = 20;
                 for (let i = 0; i < count; i++) {
                     const star = document.createElement('div');
                     star.className = 'star';
                     // reuse size classes from hotspot effect
                     if (i % 4 === 0) star.classList.add('large');
                     if (i % 3 === 0) star.classList.add('small');
-                    const x = Math.random() * w;
-                    const y = Math.random() * h;
+                    // Ensure stars stay within bounds with padding
+                    const starSize = star.classList.contains('large') ? 30 : star.classList.contains('small') ? 15 : 20;
+                    const padding = starSize / 2;
+                    const x = Math.max(padding, Math.min(w - padding, Math.random() * w));
+                    const y = Math.max(padding, Math.min(h - padding, Math.random() * h));
                     star.style.left = `${x}px`;
                     star.style.top = `${y}px`;
                     star.style.animationDelay = `${Math.random() * 0.6}s`;
@@ -3267,21 +3282,24 @@
                 // Create a stars overlay centered around the hotspot
                 const overlay = document.createElement('div');
                 overlay.className = 'stars-overlay hotspot-stars';
-                overlay.style.left = (hsRect.left - contRect.left - 90 + hsRect.width / 2) + 'px';
-                overlay.style.top = (hsRect.top - contRect.top - 90 + hsRect.height / 2) + 'px';
-                overlay.style.width = '180px';
-                overlay.style.height = '180px';
+                overlay.style.left = (hsRect.left - contRect.left - 120 + hsRect.width / 2) + 'px';
+                overlay.style.top = (hsRect.top - contRect.top - 120 + hsRect.height / 2) + 'px';
+                overlay.style.width = '240px';
+                overlay.style.height = '240px';
                 gameContainer.appendChild(overlay);
 
-                // Populate with twinkling stars (dense small cluster)
-                const count = 12;
+                // Populate with twinkling stars (more stars for better visibility)
+                const count = 20;
                 for (let i = 0; i < count; i++) {
                     const star = document.createElement('div');
                     star.className = 'star';
                     if (i % 4 === 0) star.classList.add('large');
                     if (i % 3 === 0) star.classList.add('small');
-                    const x = Math.random() * 180;
-                    const y = Math.random() * 180;
+                    // Ensure stars stay within bounds with padding
+                    const starSize = star.classList.contains('large') ? 30 : star.classList.contains('small') ? 15 : 20;
+                    const padding = starSize / 2;
+                    const x = Math.max(padding, Math.min(240 - padding, Math.random() * 240));
+                    const y = Math.max(padding, Math.min(240 - padding, Math.random() * 240));
                     star.style.left = `${x}px`;
                     star.style.top = `${y}px`;
                     star.style.animationDelay = `${Math.random() * 0.5}s`;
@@ -3299,38 +3317,31 @@
 
         // Unify tap SFX across pointer/touch/mouse with improved mobile handling
         let lastSfxTs = 0;
-        let isPlayingSfx = false; // Prevent overlapping sounds
         function addTapSfx(el) {
             if (!el) return;
             // Mark element so global fallback ignores it
             try { el.setAttribute('data-sfx', 'tap'); } catch (_) {}
             const handler = (event) => {
                 const now = Date.now();
-                // Enhanced debounce for mobile - prevent rapid fire events
-                const debounceTime = isMobileDevice ? 200 : 30;
-                if (now - lastSfxTs < debounceTime || isPlayingSfx) return;
+                // Reduced debounce for mobile - more responsive
+                const debounceTime = isMobileDevice ? 100 : 30;
+                if (now - lastSfxTs < debounceTime) return;
                 
                 lastSfxTs = now;
-                isPlayingSfx = true;
                 
                 // Gate pre-start audio: only Start button can trigger sounds before allowAudioStart
                 if (!allowAudioStart && el.id !== 'startButton') {
-                    isPlayingSfx = false;
                     return;
                 }
                 
                 initAudioIfNeeded();
                 playClickSfx();
-                
-                // Reset playing flag after a short delay
-                setTimeout(() => {
-                    isPlayingSfx = false;
-                }, 150);
             };
             
-            // Use only touchstart on mobile for better reliability
+            // Use multiple events on mobile for better reliability
             if (isMobileDevice) {
                 el.addEventListener('touchstart', handler, { passive: true, capture: true });
+                el.addEventListener('pointerdown', handler, { passive: true, capture: true });
             } else {
                 el.addEventListener('pointerdown', handler, { passive: true, capture: true });
                 el.addEventListener('mousedown', handler, { passive: true, capture: true });
