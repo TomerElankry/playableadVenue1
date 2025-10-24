@@ -319,7 +319,7 @@
         padding: 0; /* Remove all padding for seamless frame merging */
         box-sizing: border-box;
         text-align: center;
-        min-height: 90px; /* Slightly taller frame for optimal proportions */
+        min-height: 88px; /* Reduced height to compensate for taller image */
         box-shadow: 0 2px 8px rgba(246, 209, 201, 0.2); /* Soft cozy shadow */
         position: relative;
     }
@@ -363,7 +363,7 @@
     
     .catalog-item img {
         width: calc(100% + 4px) !important; /* Account for 2px border on each side */
-        height: 60px; /* Fill more of the 90px frame height */
+        height: 75px; /* Increased height to use more space */
         object-fit: fill; /* Force image to fill entire container, may distort but will be full width */
         object-position: center; /* Center the thumbnail within the frame */
         border-radius: 14px 14px 0 0; /* Match outer frame radius, only top corners rounded */
@@ -409,7 +409,7 @@
         font-weight: 500; /* Medium weight for better readability */
         line-height: 1.1; /* Tighter line height for two lines */
         text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8); /* Subtle text shadow */
-        padding: 4px 6px; /* Reduced padding for more text space */
+        padding: 2px 6px; /* Minimal padding to reduce white space */
         border-radius: 0 0 14px 14px; /* Only bottom corners rounded to match outer frame */
         background: linear-gradient(135deg, rgba(246, 209, 201, 0.3), rgba(241, 168, 157, 0.2)); /* Cozy color fade */
         border: none; /* Remove all borders for seamless merging */
@@ -2324,20 +2324,20 @@
                     // Fade out PLAY button quickly
                     const playBtn = document.getElementById('playButton');
                     if (playBtn) { 
-                        playBtn.style.transition = 'opacity 150ms ease'; 
+                        playBtn.style.transition = 'opacity 40ms ease'; 
                         playBtn.style.opacity = '0'; 
-                        setTimeout(()=>{ playBtn.style.display='none'; }, 160); 
+                        setTimeout(()=>{ playBtn.style.display='none'; }, 40); 
                     }
                     // Apply zoom very quickly with smooth easing
                     const gc = document.getElementById('gameContainer');
                     if (gc) {
-                        gc.style.transition = 'transform 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                        gc.style.transition = 'transform 40ms cubic-bezier(0.25, 0.46, 0.45, 0.94)';
                         // Force a reflow to ensure transition applies
                         void gc.offsetHeight;
                         gc.classList.add('final-zoom');
                     }
                     // Show final screen after zoom completes
-                    setTimeout(showFinalScreen, 160);
+                    setTimeout(showFinalScreen, 50);
                 });
             }
             
