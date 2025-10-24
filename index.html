@@ -60,7 +60,7 @@
         height: 100%;
         position: relative;
         transform: none;
-        background-image: url('assets/bg/cabin_base.jpg');
+        background-image: url('assets/bg/cabin_base_optimized.jpg');
         background-size: 100% 100%;
         background-position: center;
         background-repeat: no-repeat;
@@ -553,6 +553,7 @@
         line-height: 1.1;
         pointer-events: none;
     }
+    
     .final-screen.show-next .final-next-message { opacity: 1; transform: translate(-50%, -50%); }
 
     /* End-screen carousel */
@@ -665,6 +666,30 @@
         color: rgba(131, 201, 201, 1); /* Designer cyan */
         line-height: 1.15;
         padding: 0 8px;
+    }
+    
+    /* Mobile-specific font size for end screen messages */
+    @media screen and (max-width: 768px) {
+        .final-next-message {
+            font-size: clamp(40px, 10vw, 56px);
+        }
+        .final-screen .final-title {
+            font-size: clamp(40px, 10vw, 56px);
+        }
+        
+        /* Mobile adjustments for buttons */
+        .select-button {
+            padding: 8px 14px; /* Smaller padding */
+            font-size: 13px; /* Smaller font */
+            min-width: 70px; /* Smaller minimum width */
+            margin-top: 5px; /* Move select button lower */
+        }
+        
+        .play-button-bottom {
+            bottom: 5px; /* Move play button lower on mobile */
+            padding: 10px 50px; /* Smaller padding */
+            font-size: 18px; /* Smaller font size */
+        }
     }
 
     .final-screen .final-subtitle {
@@ -851,7 +876,7 @@
         border-radius: 50%;
         border: 4px solid white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        background-image: url('assets/hilary stone/1618970c4b26552e8ee72c322c2753ce94242c7f.jpg');
+        background-image: url('assets/hilary stone/1618970c4b26552e8ee72c322c2753ce94242c7f_optimized.jpg');
         background-size: cover;
         background-position: 65% center;
         flex-shrink: 0; /* Prevent image from shrinking */
@@ -1145,7 +1170,7 @@
                     "dot": {"x": 120, "y": 250},
                     "variants": [
                         {"item": "items/walls/wall2-optimized.png", "view": "items/walls/wall2-optimized.png", "name": "Taupe Wood"},
-                        {"item": "items/walls/flowersNewOption.png", "view": "items/walls/flowersNewOption.png", "name": "Newbury Wallpaper"},
+                        {"item": "items/walls/flowersNewOption_optimized.png", "view": "items/walls/flowersNewOption_optimized.png", "name": "Newbury Wallpaper"},
                         {"item": "items/walls/wall3-optimized.png", "view": "items/walls/wall3-optimized.png", "name": "Wood Grain"},
                         {"item": "items/walls/wall4-optimized.png", "view": "items/walls/wall4-optimized.png", "name": "Botanical Taupe"},
                         {"item": "items/walls/wall5-optimized.png", "view": "items/walls/wall5-optimized.png", "name": "Stone Grey"},
@@ -1198,9 +1223,9 @@
                 <div id="finalNextMessage" class="final-next-message">Choose<br/>your next design</div>
                 <div id="finalCarousel" class="final-carousel" aria-label="Design carousel">
                     <div class="carousel-track">
-                        <div class="card side left" data-index="0"><img src="assets/endscreenNextDesign/41253f788ced02a2d9a4f390cd7b487f194351a4.jpg" alt="Design 1" loading="lazy"></div>
-                        <div class="card center" data-index="1"><img src="assets/endscreenNextDesign/532013fad674bb10a5e036ccaf70386cba3cb73b.jpg" alt="Design 2" loading="lazy"></div>
-                        <div class="card side right" data-index="2"><img src="assets/endscreenNextDesign/e4e9db79fc75be2ed0ce61332d816dddc6be0c05.jpg" alt="Design 3" loading="lazy"></div>
+                        <div class="card side left" data-index="0"><img src="assets/endscreenNextDesign/41253f788ced02a2d9a4f390cd7b487f194351a4_optimized.jpg" alt="Design 1" loading="lazy"></div>
+                        <div class="card center" data-index="1"><img src="assets/endscreenNextDesign/532013fad674bb10a5e036ccaf70386cba3cb73b_optimized.jpg" alt="Design 2" loading="lazy"></div>
+                        <div class="card side right" data-index="2"><img src="assets/endscreenNextDesign/e4e9db79fc75be2ed0ce61332d816dddc6be0c05_optimized.jpg" alt="Design 3" loading="lazy"></div>
                     </div>
                 </div>
             </div>
@@ -1247,7 +1272,7 @@
         </div>
 
         <!-- Tutorial hand positioned relative to bottom section -->
-        <img src="assets/others/hovering hand.png" id="tutorialHand" class="tutorial-hand" alt="Guiding hand">
+        <img src="assets/others/hovering hand_optimized.png" id="tutorialHand" class="tutorial-hand" alt="Guiding hand">
     </div>
 
     <script>
@@ -1319,6 +1344,7 @@
             window.addEventListener(evt, () => resetInactivityTimer(), { passive: true });
         });
         let isMobileDevice = false;
+        let lastSelectSfxTs = 0;
 
         // --- Audio: ambient loop + click SFX ---
         let audioInitialized = false;
@@ -1673,7 +1699,7 @@
                         return `assets/items/walls/wall2-optimized.png?v=${new Date().getTime()}`;
                     }
                     if (i === 2) {
-                        return `assets/items/walls/flowersNewOption.png?v=${new Date().getTime()}`;
+                        return `assets/items/walls/flowersNewOption_optimized.png?v=${new Date().getTime()}`;
                     }
                     return `assets/items/walls/wall${i}-optimized.png?v=${new Date().getTime()}`;
                 }
@@ -1704,11 +1730,30 @@
 
                     try {
                         initAudioIfNeeded();
+                        
+                        // Add debounce to prevent double sounds on mobile
+                        const now = Date.now();
+                        const selectDebounceTime = isMobileDevice ? 150 : 50;
+                        if (now - lastSelectSfxTs < selectDebounceTime) {
+                            // Skip audio but still confirm selection
+                            confirmSelection();
+                            return;
+                        }
+                        lastSelectSfxTs = now;
+                        
                         // If this confirmation will complete all zones (x/6), play the task completed SFX
                         const totalZones = CONFIG.application.zones.length;
                         const confirmedCount = Object.keys(gameState.confirmedZones).length;
                         const isLastZone = (confirmedCount + 1) >= totalZones;
-                        playFromPool(isLastZone ? 'completed' : 'select');
+                        
+                        // On mobile, use requestAnimationFrame to ensure audio plays immediately
+                        if (isMobileDevice) {
+                            requestAnimationFrame(() => {
+                                playFromPool(isLastZone ? 'completed' : 'select');
+                            });
+                        } else {
+                            playFromPool(isLastZone ? 'completed' : 'select');
+                        }
                     } catch(_) {}
 
                     // Confirm immediately on pointerdown to avoid blocked click
@@ -2178,6 +2223,11 @@
         }
 
         function startNextTutorial() {
+            // If a catalog is currently open, do not show next tutorial
+            if (gameState.currentZone) {
+                console.log(`Catalog for ${gameState.currentZone} is open, skipping next tutorial`);
+                return;
+            }
             const nextRecommendedZone = getNextRecommendedZone();
             
             // If there are uncompleted zones, start tutorial for next recommended hotspot
@@ -2199,6 +2249,11 @@
         }
 
         function startHotspotTutorial(zoneId) {
+            // If a catalog is currently open (any zone), do not show tutorial
+            if (gameState.currentZone) {
+                console.log(`Catalog for ${gameState.currentZone} is open, skipping tutorial for ${zoneId}`);
+                return;
+            }
             const hand = document.getElementById('tutorialHand');
             const hotspot = document.getElementById(`hotspot-${zoneId}`);
             
@@ -2294,14 +2349,22 @@
             if (isFirstCompletion && zoneId === 'windows') {
                 // First completion was windows: show next hotspot after a delay
                 setTimeout(() => {
-                    startNextTutorial();
+                    if (!gameState.currentZone) { // Only show tutorial if no catalog is open
+                        startNextTutorial();
+                    } else {
+                        console.log(`Catalog for ${gameState.currentZone} is open, delaying next tutorial after windows completion.`);
+                    }
                 }, INACTIVITY_MS); // 6 second delay to match other timers
             } else {
                 // All other cases: use 6s timer before showing next hotspot
                 if (postWindowsSelectTimerId) clearTimeout(postWindowsSelectTimerId);
                 postWindowsSelectTimerId = setTimeout(() => {
-                    const nextZone = getNextRecommendedZone();
-                    if (nextZone) startHotspotTutorial(nextZone);
+                    if (!gameState.currentZone) { // Only show tutorial if no catalog is open
+                        const nextZone = getNextRecommendedZone();
+                        if (nextZone) startHotspotTutorial(nextZone);
+                    } else {
+                        console.log(`Catalog for ${gameState.currentZone} is open, delaying next tutorial after selection.`);
+                    }
                 }, INACTIVITY_MS);
             }
             
@@ -3038,9 +3101,11 @@
                 const gameContainer = document.getElementById('gameContainer');
                 const containerRect = gameContainer.getBoundingClientRect();
                 
-                // Position hand next to the hotspot (lowered by 30px)
+                // Position hand next to the hotspot (device-specific positioning)
                 const screenHeight = window.innerHeight;
-                const topPos = hotspotRect.top - containerRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) - (screenHeight / 2.4) + 30;
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+                const mobileOffset = isMobile ? -20 : 10; // Perfect on mobile, higher on desktop
+                const topPos = hotspotRect.top - containerRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) - (screenHeight / 2.4) + mobileOffset;
                 const leftPos = hotspotRect.left - containerRect.left - hand.offsetWidth + 70;
                 
                 hand.style.top = `${topPos}px`;
@@ -3232,26 +3297,44 @@
             } catch (_) { /* no-op */ }
         }
 
-        // Unify tap SFX across pointer/touch/mouse with light de-dupe
+        // Unify tap SFX across pointer/touch/mouse with improved mobile handling
         let lastSfxTs = 0;
+        let isPlayingSfx = false; // Prevent overlapping sounds
         function addTapSfx(el) {
             if (!el) return;
             // Mark element so global fallback ignores it
             try { el.setAttribute('data-sfx', 'tap'); } catch (_) {}
-            const handler = () => {
+            const handler = (event) => {
                 const now = Date.now();
-                // Debounce across multiple simultaneous events (pointer + touch + mouse)
-                if (now - lastSfxTs < 30) return;
+                // Enhanced debounce for mobile - prevent rapid fire events
+                const debounceTime = isMobileDevice ? 200 : 30;
+                if (now - lastSfxTs < debounceTime || isPlayingSfx) return;
+                
                 lastSfxTs = now;
+                isPlayingSfx = true;
+                
                 // Gate pre-start audio: only Start button can trigger sounds before allowAudioStart
-                if (!allowAudioStart && el.id !== 'startButton') return;
+                if (!allowAudioStart && el.id !== 'startButton') {
+                    isPlayingSfx = false;
+                    return;
+                }
+                
                 initAudioIfNeeded();
                 playClickSfx();
+                
+                // Reset playing flag after a short delay
+                setTimeout(() => {
+                    isPlayingSfx = false;
+                }, 150);
             };
-            // Attach to multiple gesture primitives for broader WebKit reliability
-            el.addEventListener('pointerdown', handler, { passive: true, capture: true });
-            el.addEventListener('touchstart', handler, { passive: true, capture: true });
-            el.addEventListener('mousedown', handler, { passive: true, capture: true });
+            
+            // Use only touchstart on mobile for better reliability
+            if (isMobileDevice) {
+                el.addEventListener('touchstart', handler, { passive: true, capture: true });
+            } else {
+                el.addEventListener('pointerdown', handler, { passive: true, capture: true });
+                el.addEventListener('mousedown', handler, { passive: true, capture: true });
+            }
         }
     </script>
 </body>
