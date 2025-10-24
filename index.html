@@ -1266,6 +1266,7 @@
         let catalogHintStage = null; // null | 'option' | 'select' for non-windows catalogs
         const INACTIVITY_MS = 6000;
         let stopTutorialTimeoutId = null; // Manages the timeout for hiding the hand
+        let isFirstCatalogOpened = false; // Track if user has opened their first catalog ever
 
         function isWindowsCompleted() {
             return isZoneCompleted('windows');
@@ -1285,13 +1286,10 @@
                 const isCatalogVisible = catalog && getComputedStyle(catalog).visibility === 'visible' && getComputedStyle(catalog).opacity !== '0';
                 if (isCatalogVisible && gameState.currentZone) {
                     const z = gameState.currentZone;
-                    if (z === 'windows') {
-                        // Windows has its own immediate flow; skip timer trigger
-                        return;
-                    }
-                    // For non-windows catalogs, staged hints: first an option, then Select
+                    // For catalogs with staged hints (using catalogHintStage), show the appropriate tutorial
                     if (catalogHintStage === 'option') {
-                        if (z === 'chandelier') startChandelierTutorial();
+                        if (z === 'windows') startWindowsTutorial();
+                        else if (z === 'chandelier') startChandelierTutorial();
                         else if (z === 'bed_frame') startBedFrameTutorial();
                         else if (z === 'bed_sheets') startBedSheetsTutorial();
                         else if (z === 'floor') startFloorTutorial();
@@ -1878,7 +1876,7 @@
             gameState.currentZone = zoneId;
             const activeHotspot = document.getElementById(`hotspot-${zoneId}`);
             if (activeHotspot && !isZoneCompleted(zoneId)) {
-                activeHotspot.style.background = '#F6D1C9'; // Change to old pink
+                activeHotspot.style.background = 'rgb(201, 141, 132)'; // Change to old pink
                 activeHotspot.style.pointerEvents = 'none'; // Disable clicks while catalog is open
             }
             const zoneConfig = CONFIG.application.zonesConfig[zoneId];
@@ -1926,11 +1924,15 @@
                         activeHotspot.style.opacity = '0'; // Hide hotspot
                     }
                     
-                    // For windows, point immediately; for non-windows, stop option hand and start 6s-to-Select
-                    if (zoneId === 'windows') {
+                    // Check if this is first catalog (immediate tutorial) or subsequent (use timer)
+                    // Note: isFirstCatalogOpened is already true by this point since openCatalog set it
+                    const wasFirstCatalog = (gameState.totalObjectsChosen === 0); // No selections made yet = first catalog
+                    
+                    if (wasFirstCatalog) {
+                        // First catalog ever: point to Select button immediately
                         startSelectButtonTutorial();
                     } else {
-                        // Hide any option hint hand and schedule Select hint after inactivity
+                        // Not first catalog: schedule Select hint after inactivity
                         try { stopTutorial(); } catch (e) {}
                         catalogHintStage = 'select';
                         resetInactivityTimer();
@@ -1981,11 +1983,25 @@
             // Analytics
             trackEvent('spot_opened', { zone: zoneId });
             
-            // If this is the tutorial, start the hand animation
-            if (zoneId === 'windows') {
-                setTimeout(startWindowsTutorial, 600); // Windows remains immediate
+            // Check if this is the first catalog ever opened
+            if (!isFirstCatalogOpened) {
+                // First catalog: show tutorial immediately (no timers)
+                isFirstCatalogOpened = true;
+                if (zoneId === 'windows') {
+                    setTimeout(startWindowsTutorial, 600);
+                } else if (zoneId === 'chandelier') {
+                    setTimeout(startChandelierTutorial, 600);
+                } else if (zoneId === 'bed_frame') {
+                    setTimeout(startBedFrameTutorial, 600);
+                } else if (zoneId === 'bed_sheets') {
+                    setTimeout(startBedSheetsTutorial, 600);
+                } else if (zoneId === 'floor') {
+                    setTimeout(startFloorTutorial, 600);
+                } else if (zoneId === 'walls') {
+                    setTimeout(startWallsTutorial, 600);
+                }
             } else {
-                // Stage 1: point to a specific option after inactivity
+                // Not first catalog: use timer for tutorial
                 catalogHintStage = 'option';
                 resetInactivityTimer();
             }
@@ -2271,17 +2287,20 @@
             
             closeCatalog();
             
-            // After windows completion, set a dedicated 6s timer to point to next hotspot
-            if (zoneId === 'windows') {
+            // After any completion, use timer to point to next hotspot
+            // Only exception: first catalog completion when windows is first should be immediate
+            const isFirstCompletion = (gameState.totalObjectsChosen === 1);
+            
+            if (isFirstCompletion && zoneId === 'windows') {
+                // First completion was windows: show next hotspot immediately (original tutorial flow)
+                startNextTutorial();
+            } else {
+                // All other cases: use 6s timer before showing next hotspot
                 if (postWindowsSelectTimerId) clearTimeout(postWindowsSelectTimerId);
                 postWindowsSelectTimerId = setTimeout(() => {
                     const nextZone = getNextRecommendedZone();
                     if (nextZone) startHotspotTutorial(nextZone);
                 }, INACTIVITY_MS);
-            } else if (!isWindowsCompleted()) {
-                startNextTutorial();
-            } else {
-                resetInactivityTimer();
             }
             
             // Check if all zones are confirmed
