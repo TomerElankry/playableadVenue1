@@ -126,8 +126,8 @@
     
     .hotspot {
         position: absolute;
-        width: 40px; /* Smaller size */
-        height: 40px;
+        width: 30px; /* Even smaller size */
+        height: 30px;
         background: rgba(128, 128, 128, 0.5); /* Semi-transparent grey */
         border: 2px solid #fff;
         border-radius: 50%;
@@ -138,7 +138,7 @@
         display: flex; /* Add flexbox for centering */
         align-items: center; /* Center vertically */
         justify-content: center; /* Center horizontally */
-        font-size: 24px; /* Smaller plus sign */
+        font-size: 28px; /* Even bigger plus sign */
         color: white; /* Color of the plus sign */
         font-weight: bold; /* Make the plus sign thicker */
         z-index: 10; /* Ensure hotspots are always on top */
@@ -1061,7 +1061,7 @@
                 },
                 "chandelier": {
                     "view": "items/chandelier/view/default",
-                    "dot": {"x": -4, "y": -200},
+                    "dot": {"x": -4, "y": -350},
                     "variants": [
                         {"item": "items/chandelier/item/1.png", "view": "items/chandelier/view/1.png", "name": "Modern Pendant"},
                         {"item": "items/chandelier/item/2.png", "view": "items/chandelier/view/2.png", "name": "Rustic Iron"},
@@ -1834,17 +1834,16 @@
                 if (prevHotspot) {
                     prevHotspot.textContent = '+'; // Restore plus sign
                     prevHotspot.classList.remove('confirmed');
-                    prevHotspot.style.opacity = '1';
+                    prevHotspot.style.opacity = '1'; // Make visible again
                     prevHotspot.style.pointerEvents = 'auto';
                 }
             }
 
-            // Keep active hotspot visible but remove plus sign while browsing catalog
+            // Hide active hotspot while browsing catalog
             gameState.currentZone = zoneId;
             const activeHotspot = document.getElementById(`hotspot-${zoneId}`);
             if (activeHotspot && !isZoneCompleted(zoneId)) {
-                activeHotspot.textContent = ''; // Remove plus sign while browsing
-                activeHotspot.style.opacity = '1'; // Keep visible
+                activeHotspot.style.opacity = '0'; // Hide while browsing
                 activeHotspot.style.pointerEvents = 'none'; // Disable clicks while catalog is open
             }
             const zoneConfig = CONFIG.application.zonesConfig[zoneId];
@@ -2403,7 +2402,17 @@
         function closeCatalog() {
             const catalog = document.getElementById('catalog');
             const selectButton = document.getElementById('selectButton');
-            // Do not auto-restore hotspot here. We handle restore in openCatalog when switching zones.
+            
+            // Restore hotspot if user closes catalog without confirming
+            const currentZone = gameState.currentZone;
+            if (currentZone && !isZoneCompleted(currentZone)) {
+                const hotspot = document.getElementById(`hotspot-${currentZone}`);
+                if (hotspot) {
+                    hotspot.style.opacity = '1'; // Make visible again
+                    hotspot.style.pointerEvents = 'auto'; // Re-enable clicks
+                    hotspot.textContent = '+'; // Restore plus sign
+                }
+            }
             
             // Add fade out animation
             catalog.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out, visibility 0.5s ease-out';
@@ -2428,6 +2437,12 @@
             // Hide only interactive catalog area; keep bottom bar visible for CTA
             const catalog = document.getElementById('catalog');
             if (catalog) catalog.style.display = 'none';
+
+            // Fade out all hotspots when end screen appears
+            document.querySelectorAll('.hotspot').forEach(hotspot => {
+                hotspot.style.transition = 'opacity 0.3s ease-out';
+                hotspot.style.opacity = '0';
+            });
 
             // Hide in-game Play, show end Download CTA
             const playBtn = document.getElementById('playButton');
