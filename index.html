@@ -2292,8 +2292,10 @@
             const isFirstCompletion = (gameState.totalObjectsChosen === 1);
             
             if (isFirstCompletion && zoneId === 'windows') {
-                // First completion was windows: show next hotspot immediately (original tutorial flow)
-                startNextTutorial();
+                // First completion was windows: show next hotspot after a delay
+                setTimeout(() => {
+                    startNextTutorial();
+                }, INACTIVITY_MS); // 6 second delay to match other timers
             } else {
                 // All other cases: use 6s timer before showing next hotspot
                 if (postWindowsSelectTimerId) clearTimeout(postWindowsSelectTimerId);
