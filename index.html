@@ -728,29 +728,6 @@
         display: none !important;
     }
     
-    /* Debug HUD */
-    .debug-hud {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 10px;
-        border-radius: 5px;
-        font-family: monospace;
-        font-size: 12px;
-        z-index: 2000;
-        max-width: 300px;
-    }
-    
-    .debug-hud h4 {
-        margin: 0 0 10px 0;
-        color: #00ff00;
-    }
-    
-    .debug-hud .coord {
-        margin: 2px 0;
-    }
 
     /* Tutorial UI */
     #tutorialBubble {
@@ -1211,12 +1188,6 @@
             <!-- Game Hotspots -->
             <div id="hotspots"></div>
             
-            <!-- Debug HUD -->
-            <div id="debugHud" class="debug-hud" style="display: none;">
-                <h4>Debug Info</h4>
-                <div class="coord">Mouse: <span id="mouseCoords">0, 0</span></div>
-                <div class="coord">Container: <span id="containerCoords">0, 0</span></div>
-            </div>
             
             <!-- Final Screen -->
             <div id="finalScreen" class="final-screen">
@@ -1346,7 +1317,20 @@
         
         // Global activity listeners to reset inactivity timer across the app
         ;['click','mousemove','keydown','touchstart'].forEach(evt => {
-            window.addEventListener(evt, () => resetInactivityTimer(), { passive: true });
+            window.addEventListener(evt, function(e) {
+                // Don't reset timer for interactive elements (buttons, hotspots, catalog items)
+                const target = e.target;
+                if (target && typeof target.closest === 'function') {
+                    if (target.closest('.hotspot') || 
+                        target.closest('.catalog-item') || 
+                        target.closest('#selectButton') ||
+                        target.closest('#startButton') ||
+                        target.closest('#playButton')) {
+                        return; // Skip resetting timer for these elements
+                    }
+                }
+                resetInactivityTimer();
+            }, { passive: true });
         });
         let isMobileDevice = false;
         let lastSelectSfxTs = 0;
@@ -2360,6 +2344,7 @@
             
             if (isFirstCompletion && zoneId === 'windows') {
                 // First completion was windows: show next hotspot after a delay
+                if (inactivityTimerId) clearTimeout(inactivityTimerId); // Clear existing inactivity timer
                 setTimeout(() => {
                     if (!gameState.currentZone) { // Only show tutorial if no catalog is open
                         startNextTutorial();
@@ -3110,18 +3095,12 @@
                 return;
             }
 
-            // Position hand to point at the windows hotspot
+            // Position hand to point at the windows hotspot (simplified like other hotspots)
             const updateHandPosition = () => {
                 const hotspotRect = windowsHotspot.getBoundingClientRect();
-                const gameContainer = document.getElementById('gameContainer');
-                const containerRect = gameContainer.getBoundingClientRect();
-                
-                // Position hand next to the hotspot (device-specific positioning)
-                const screenHeight = window.innerHeight;
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-                const mobileOffset = isMobile ? -20 : 10; // Perfect on mobile, higher on desktop
-                const topPos = hotspotRect.top - containerRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) - (screenHeight / 2.4) + mobileOffset;
-                const leftPos = hotspotRect.left - containerRect.left - hand.offsetWidth + 70;
+                // Use same simple positioning as other hotspots
+                const topPos = hotspotRect.top + (hotspotRect.height / 2) - (hand.offsetHeight / 2) + 46 + 20; // Lower by 20px
+                const leftPos = hotspotRect.left - hand.offsetWidth + 70;
                 
                 hand.style.top = `${topPos}px`;
                 hand.style.left = `${leftPos}px`;
@@ -3130,8 +3109,8 @@
             // Show the hand with specific rotation for windows tutorial
             hand.style.display = 'block';
             hand.style.visibility = 'visible';
-            hand.style.position = 'absolute';
-            hand.style.zIndex = '1000';
+            hand.style.position = 'fixed'; // Use fixed positioning like other hotspots
+            hand.style.zIndex = '10000'; // Match other hotspots z-index
             hand.style.transform = 'rotate(-15deg)'; // Specific rotation for windows tutorial
             hand.style.animation = 'hand-float-windows 1s ease-in-out infinite alternate';
             hand.style.transition = 'opacity 0.8s ease-in-out';
@@ -3189,23 +3168,6 @@
             }
         }
         
-        function setupDebugMode() {
-            const gameContainer = document.getElementById('gameContainer');
-            const mouseCoords = document.getElementById('mouseCoords');
-            const containerCoords = document.getElementById('containerCoords');
-            
-            // Update mouse coordinates
-            document.addEventListener('mousemove', function(e) {
-                const rect = gameContainer.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const relativeX = e.clientX - centerX;
-                const relativeY = e.clientY - centerY;
-                
-                mouseCoords.textContent = `${relativeX}, ${relativeY}`;
-                containerCoords.textContent = `${rect.width}x${rect.height}`;
-            });
-        }
         
         // Initialize game when page loads
         window.addEventListener('load', function() {
